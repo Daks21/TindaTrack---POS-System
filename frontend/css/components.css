@@ -405,3 +405,247 @@
     flex-direction: column;
   }
 }
+
+/* Products Page */
+
+.page-section {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+}
+
+.products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.products-header h2 {
+  color: var(--color-text);
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.products-header p {
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.add-product-button {
+  width: auto;
+}
+
+.products-toolbar {
+  margin-bottom: 16px;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 360px;
+  padding: 10px 12px;
+
+  font-family: var(--font-main);
+  font-size: 14px;
+  color: var(--color-text);
+
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Modal */
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+
+  background-color: rgba(17, 24, 39, 0.45);
+
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 520px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  color: var(--color-text);
+  font-size: 20px;
+}
+
+.modal-close-button {
+  background-color: var(--color-background);
+  color: var(--color-text-muted);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+
+  width: 32px;
+  height: 32px;
+
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.product-form select {
+  width: 100%;
+  padding: 10px 12px;
+
+  font-family: var(--font-main);
+  font-size: 15px;
+  color: var(--color-text);
+
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.product-form select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.secondary-button {
+  padding: 12px 16px;
+
+  background-color: var(--color-surface);
+  color: var(--color-text);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+
+  font-family: var(--font-main);
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.secondary-button:hover {
+  background-color: var(--color-background);
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .products-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .add-product-button {
+    width: 100%;
+  }
+
+  .search-input {
+    max-width: 100%;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-card {
+    padding: 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .secondary-button,
+  .modal-actions .submit-button {
+    width: 100%;
+  }
+}
+
+
+/* Product Table Actions */
+
+.stock-low {
+  color: var(--color-error);
+  font-weight: 700;
+}
+
+.stock-ok {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.table-button {
+  padding: 6px 10px;
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.edit-button {
+  background-color: var(--color-background);
+  color: var(--color-primary);
+}
+
+.delete-button {
+  background-color: var(--color-background);
+  color: var(--color-error);
+}
+
+.table-button:hover {
+  background-color: var(--color-surface);
+}
