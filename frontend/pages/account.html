@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>TindaTrack | Account Settings</title>
+
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+</head>
+<body class="app-body">
+
+  <div class="app-layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-box">TT</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-link" data-page="dashboard">
+          <img src="../assets/images/icons-light/dashboard-light.svg" alt="Dashboard" class="nav-icon">
+          <span class="nav-link-text">Dashboard</span>
+        </a>
+        <a href="products.html" class="nav-link" data-page="products">
+          <img src="../assets/images/icons-light/products-light.svg" alt="Products" class="nav-icon">
+          <span class="nav-link-text">Products</span>
+        </a>
+        <a href="inventory.html" class="nav-link" data-page="inventory">
+          <img src="../assets/images/icons-light/inventory-light.svg" alt="Inventory" class="nav-icon">
+          <span class="nav-link-text">Inventory</span>
+        </a>
+        <a href="sales.html" class="nav-link" data-page="sales">
+          <img src="../assets/images/icons-light/sales-light.svg" alt="Sales" class="nav-icon">
+          <span class="nav-link-text">Sales</span>
+        </a>
+        <a href="history.html" class="nav-link" data-page="history">
+          <img src="../assets/images/icons-light/history-light.svg" alt="History" class="nav-icon">
+          <span class="nav-link-text">History</span>
+        </a>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+
+      <header class="topbar">
+        <div>
+          <h1>Account Settings</h1>
+          <p>Manage your profile and preferences</p>
+        </div>
+
+        <div class="topbar-actions">
+          <button type="button" class="theme-toggle-button" id="theme-toggle" title="Toggle light/dark mode">
+            ☀️
+          </button>
+
+          <div class="account-dropdown-wrapper">
+            <button type="button" class="account-button" id="account-menu-button" aria-label="Account menu">
+              <img src="../assets/images/icons-light/account-light.svg" alt="Account" class="account-icon">
+            </button>
+            <div class="account-dropdown-menu" id="account-dropdown" role="menu">
+              <a href="account.html" role="menuitem" class="account-menu-item">Account Settings</a>
+              <button type="button" class="account-menu-item logout-item" id="account-logout" role="menuitem">
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-body" id="account-page-root">
+
+        <div style="margin-bottom: 24px;">
+          <a href="dashboard.html" style="color: var(--color-primary); text-decoration: none; font-size: 14px; font-weight: 600;">
+            ← Back to Dashboard
+          </a>
+        </div>
+
+        <!-- Your Profile Card -->
+        <section class="page-section">
+          <div class="products-header">
+            <div>
+              <h2>Your Profile</h2>
+              <p>View your account information</p>
+            </div>
+          </div>
+
+          <div style="display: grid; gap: 24px;">
+            <!-- Avatar and Name -->
+            <div style="display: flex; align-items: center; gap: 20px;">
+              <div style="
+                width: 64px;
+                height: 64px;
+                border-radius: 50%;
+                background-color: var(--color-primary);
+                color: var(--color-surface);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                font-weight: 700;
+                flex-shrink: 0;
+              " id="account-avatar">
+                U
+              </div>
+              <div>
+                <h3 style="color: var(--color-text); font-size: 22px; margin-bottom: 4px;" id="account-fullname">
+                  User
+                </h3>
+                <p style="color: var(--color-text-muted); font-size: 14px;" id="account-email">
+                  user@email.com
+                </p>
+              </div>
+            </div>
+
+            <!-- Account Info Grid -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+              <div>
+                <label style="display: block; color: var(--color-text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">
+                  Email
+                </label>
+                <p style="color: var(--color-text); font-size: 14px;" id="account-email-display">
+                  user@email.com
+                </p>
+              </div>
+              <div>
+                <label style="display: block; color: var(--color-text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">
+                  Status
+                </label>
+                <p style="color: var(--color-success); font-size: 14px; font-weight: 600;" id="account-status">
+                  Active
+                </p>
+              </div>
+              <div>
+                <label style="display: block; color: var(--color-text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">
+                  Member Since
+                </label>
+                <p style="color: var(--color-text); font-size: 14px;" id="account-member-since">
+                  May 11, 2026
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Profile Settings Card -->
+        <section class="page-section">
+          <div class="products-header">
+            <div>
+              <h2>Profile Settings</h2>
+              <p>Update your personal information</p>
+            </div>
+          </div>
+
+          <div style="color: var(--color-text-muted); text-align: center; padding: 40px 20px;">
+            <p style="font-size: 14px;">Coming soon</p>
+          </div>
+        </section>
+
+        <!-- Theme & Appearance Card -->
+        <section class="page-section">
+          <div class="products-header">
+            <div>
+              <h2>Theme & Appearance</h2>
+              <p>Customize how the app looks</p>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 0;">
+            <div>
+              <h3 style="color: var(--color-text); font-size: 15px; margin-bottom: 4px;">
+                Dark Mode
+              </h3>
+              <p style="color: var(--color-text-muted); font-size: 13px;">
+                Toggle between light and dark theme
+              </p>
+            </div>
+            <button type="button" class="theme-toggle-button" id="theme-toggle" title="Toggle light/dark mode" style="width: auto; padding: 10px 16px; font-size: 16px;">
+              ☀️
+            </button>
+          </div>
+        </section>
+
+        <!-- Preferences Card -->
+        <section class="page-section">
+          <div class="products-header">
+            <div>
+              <h2>Preferences</h2>
+              <p>Set your app preferences</p>
+            </div>
+          </div>
+
+          <div style="color: var(--color-text-muted); text-align: center; padding: 40px 20px;">
+            <p style="font-size: 14px;">Coming soon</p>
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+  </div>
+
+  <script src="../js/auth.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/account.js"></script>
+</body>
+</html>

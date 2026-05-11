@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>TindaTrack | Products</title>
+
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+</head>
+<body class="app-body">
+
+  <div class="app-layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-box">TT</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-link active" data-page="dashboard">
+          <img src="../assets/images/icons-light/dashboard-light.svg" alt="Dashboard" class="nav-icon">
+          <span class="nav-link-text">Dashboard</span>
+        </a>
+        <a href="products.html" class="nav-link" data-page="products">
+          <img src="../assets/images/icons-light/products-light.svg" alt="Products" class="nav-icon">
+          <span class="nav-link-text">Products</span>
+        </a>
+        <a href="inventory.html" class="nav-link" data-page="inventory">
+          <img src="../assets/images/icons-light/inventory-light.svg" alt="Inventory" class="nav-icon">
+          <span class="nav-link-text">Inventory</span>
+        </a>
+        <a href="sales.html" class="nav-link" data-page="sales">
+          <img src="../assets/images/icons-light/sales-light.svg" alt="Sales" class="nav-icon">
+          <span class="nav-link-text">Sales</span>
+        </a>
+        <a href="history.html" class="nav-link" data-page="history">
+          <img src="../assets/images/icons-light/history-light.svg" alt="History" class="nav-icon">
+          <span class="nav-link-text">History</span>
+        </a>
+      </nav>
+
+    </aside>
+
+    <div class="main-content">
+
+      <header class="topbar">
+        <div>
+          <h1>Products</h1>
+          <p>Manage your product list, prices, stock, and units</p>
+        </div>
+
+        <div class="topbar-actions">
+          <button type="button" class="theme-toggle-button" id="theme-toggle" title="Toggle light/dark mode">
+            ☀️
+          </button>
+
+          <div class="account-dropdown-wrapper">
+            <button type="button" class="account-button" id="account-menu-button" aria-label="Account menu">
+              <img src="../assets/images/icons-light/account-light.svg" alt="Account" class="account-icon">
+            </button>
+            <div class="account-dropdown-menu" id="account-dropdown" role="menu">
+              <a href="account.html" role="menuitem" class="account-menu-item">Account Settings</a>
+              <button type="button" class="account-menu-item logout-item" id="account-logout" role="menuitem">
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-body">
+
+        <section class="page-section">
+          <div class="products-header">
+            <div>
+              <h2>Product Management</h2>
+              <p>View, add, edit, and delete store products</p>
+            </div>
+
+            <button type="button" class="submit-button add-product-button" id="add-product-button">
+              Add Product
+            </button>
+          </div>
+
+          <div class="products-toolbar">
+            <input 
+              type="text" 
+              id="product-search" 
+              class="search-input" 
+              placeholder="Search product by name"
+            />
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Unit</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody id="products-table-body">
+                <!-- Product rows will be rendered by products.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title">Add Product</h2>
+        <button type="button" class="modal-close-button" id="close-modal-button">
+          ×
+        </button>
+      </div>
+
+      <form id="product-form" class="product-form" autocomplete="off">
+        <div class="form-group">
+          <label for="product-name">Product Name</label>
+          <input 
+            type="text" 
+            id="product-name" 
+            name="product-name" 
+            placeholder="Enter product name"
+            required
+            autocomplete="off"
+          />
+          <p id="product-name-error" class="form-error"></p>
+        </div>
+
+        <div class="form-group">
+          <label for="product-category">Category</label>
+          <input 
+            type="text" 
+            id="product-category" 
+            name="product-category" 
+            placeholder="Enter category"
+            required
+            autocomplete="off"
+          />
+          <p id="product-category-error" class="form-error"></p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="product-price">Price</label>
+            <input 
+              type="number" 
+              id="product-price" 
+              name="product-price" 
+              placeholder="0.00"
+              required
+              autocomplete="off"
+            />
+            <p id="product-price-error" class="form-error"></p>
+          </div>
+
+          <div class="form-group">
+            <label for="product-cost">Cost</label>
+            <input 
+              type="number" 
+              id="product-cost" 
+              name="product-cost" 
+              placeholder="0.00"
+              required
+              autocomplete="off"
+            />
+            <p id="product-cost-error" class="form-error"></p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="product-stock">Stock</label>
+            <input 
+              type="number" 
+              id="product-stock" 
+              name="product-stock" 
+              placeholder="0"
+              required
+              autocomplete="off"
+            />
+            <p id="product-stock-error" class="form-error"></p>
+          </div>
+
+          <div class="form-group">
+            <label for="product-unit">Unit</label>
+            <select id="product-unit" name="product-unit" required>
+              <option value="">Select unit</option>
+              <option value="piece">piece</option>
+              <option value="pack">pack</option>
+              <option value="bottle">bottle</option>
+              <option value="sachet">sachet</option>
+              <option value="can">can</option>
+            </select>
+            <p id="product-unit-error" class="form-error"></p>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="secondary-button" id="cancel-modal-button">
+            Cancel
+          </button>
+
+          <button type="submit" class="submit-button">
+            Save Product
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/auth.js"></script>
+  <script src="../js/products.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/account.js"></script>
+</body>
+</html>
