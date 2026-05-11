@@ -1,0 +1,278 @@
+/* ── Low Stock Alerts ── */
+
+.stock-alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stock-alert-item {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.stock-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.status-fine     { background-color: var(--stock-color-ok); }
+.status-low      { background-color: var(--stock-color-low); }
+.status-critical { background-color: var(--stock-color-out); }
+
+.stock-info h3 {
+  color: var(--color-text);
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+
+.stock-info p {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.stock-label {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  background-color: var(--color-surface);
+}
+
+.fine-label     { color: var(--stock-color-ok); }
+.low-label      { color: color-mix(in srgb, var(--stock-color-low) 75%, #000); }
+.critical-label { color: var(--stock-color-out); }
+
+/* ── Dashboard Analytics Section ── */
+
+.dashboard-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.customize-dashboard-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text-muted);
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.customize-dashboard-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+.customize-dashboard-link:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background-color: rgba(90, 158, 111, 0.06);
+}
+
+.dashboard-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  min-width: 0;
+  width: 100%;
+}
+
+.dashboard-chart-card {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dashboard-chart-card.span-2 {
+  grid-column: 1 / -1;
+}
+
+.dashboard-chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.dashboard-chart-canvas-wrapper {
+  position: relative;
+  height: 180px;
+}
+
+.dashboard-chart-canvas-wrapper canvas {
+  display: block;
+}
+
+.dashboard-analytics-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.dashboard-analytics-empty a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.dashboard-analytics-empty a:hover {
+  opacity: 0.88;
+}
+
+.dashboard-analytics-empty svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Dashboard Heatmap (compact) ── */
+
+.dash-hm-outer {
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.dash-hm-outer::-webkit-scrollbar { display: none; }
+
+.dash-hm-month-row {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 4px;
+}
+
+.dash-hm-spacer {
+  width: 26px;
+  flex-shrink: 0;
+}
+
+.dash-hm-months {
+  display: flex;
+  gap: 0;
+}
+
+.dash-heatmap-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.dash-hm-day-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 22px;
+  flex-shrink: 0;
+}
+
+.dash-hm-day-labels span {
+  font-size: 9px;
+  height: 10px;
+  line-height: 10px;
+  color: var(--color-text-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dash-heatmap-cells {
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+}
+
+.dash-heatmap-week {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dash-heatmap-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+  cursor: default;
+  transition: opacity 0.15s;
+}
+
+.dash-heatmap-cell[data-level]:not([data-level="empty"]):not([data-level="0"]):hover {
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.dash-heatmap-cell[data-level="empty"] { background-color: transparent; cursor: default; }
+.dash-heatmap-cell[data-level="0"]     { background-color: rgba(90, 158, 111, 0.10); }
+.dash-heatmap-cell[data-level="1"]     { background-color: rgba(90, 158, 111, 0.28); }
+.dash-heatmap-cell[data-level="2"]     { background-color: rgba(90, 158, 111, 0.52); }
+.dash-heatmap-cell[data-level="3"]     { background-color: rgba(90, 158, 111, 0.76); }
+.dash-heatmap-cell[data-level="4"]     { background-color: #5a9e6f; }
+
+html[data-theme="dark"] .dash-heatmap-cell[data-level="0"] { background-color: rgba(107, 179, 128, 0.12); }
+html[data-theme="dark"] .dash-heatmap-cell[data-level="1"] { background-color: rgba(107, 179, 128, 0.30); }
+html[data-theme="dark"] .dash-heatmap-cell[data-level="2"] { background-color: rgba(107, 179, 128, 0.55); }
+html[data-theme="dark"] .dash-heatmap-cell[data-level="3"] { background-color: rgba(107, 179, 128, 0.78); }
+html[data-theme="dark"] .dash-heatmap-cell[data-level="4"] { background-color: #6bb380; }
+
+.dash-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 900px) {
+  .dashboard-charts-grid { grid-template-columns: 1fr; }
+  .dashboard-chart-card.span-2 { grid-column: 1; }
+}
+
+@media (max-width: 600px) {
+  .stock-alert-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-chart-canvas-wrapper {
+    height: 160px;
+  }
+}

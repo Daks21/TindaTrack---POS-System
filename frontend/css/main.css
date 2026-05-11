@@ -5,29 +5,78 @@
 }
 
 :root {
-  --color-primary: #2563eb;
-  --color-primary-dark: #1e40af;
+  --color-primary: #5a9e6f;
+  --color-primary-dark: #4a8b5e;
   --color-secondary: #0f766e;
-
-  --color-background: #f8fafc;
+  --color-background: #f0f5f1;
   --color-surface: #ffffff;
-  --color-text: #111827;
+  --color-text: #2d3a2e;
   --color-text-muted: #6b7280;
-
-  --color-border: #e5e7eb;
+  --color-border: rgba(90, 158, 111, 0.15);
+  --color-border-subtle: rgba(90, 158, 111, 0.08);
   --color-error: #dc2626;
   --color-success: #16a34a;
 
-  --font-main: Arial, sans-serif;
-  --font-size-base: 16px;
+  --stock-color-ok:  #5a9e6f;
+  --stock-color-low: #eab308;
+  --stock-color-out: #dc2626;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  --font-main: 'DM Sans', sans-serif;
+  --font-size-base: 14px;
 
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0 6px 16px rgba(15, 23, 42, 0.12);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
 
-  --transition-speed: 0.2s;
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.10);
+  --shadow-lg: 0 12px 32px rgba(90, 158, 111, 0.15);
+
+  --transition-speed: 0.3s;
+  --transition-bounce: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html[data-theme="dark"] {
+  --color-primary: #6bb380;
+  --color-primary-dark: #7ec494;
+  --color-background: #1a1f1c;
+  --color-surface: #242b26;
+  --color-text: #e2e8e3;
+  --color-text-muted: #9ca3af;
+  --color-border: rgba(107, 179, 128, 0.2);
+  --color-border-subtle: rgba(107, 179, 128, 0.08);
+}
+
+* {
+  transition: background-color 0.3s ease,
+              color 0.3s ease,
+              border-color 0.3s ease;
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(90, 158, 111, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(90, 158, 111, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(90, 158, 111, 0);   }
+}
+
+html {
+  height: 100%;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 body {
@@ -42,6 +91,8 @@ body {
   align-items: center;
   min-height: 100vh;
 }
+
+/* ── Login / Register Page Styles ── */
 
 .page-wrapper {
   width: 100%;
@@ -69,10 +120,15 @@ body {
   align-items: center;
 
   background-color: var(--color-primary);
-  color: var(--color-surface);
+  color: #ffffff;
   border-radius: var(--radius-md);
-  font-size: 11px;
-  font-weight: 700;
+}
+
+.logo-area svg {
+  width: 32px;
+  height: 32px;
+  color: #ffffff;
+  stroke: #ffffff;
 }
 
 .app-branding p {
@@ -125,20 +181,19 @@ body {
   padding: 10px 12px;
 
   font-family: var(--font-main);
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-text);
-  
+
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
-
 .form-group input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 0 0 2px rgba(90, 158, 111, 0.3);
 }
 
 .form-error {
@@ -164,22 +219,21 @@ body {
   padding: 12px 16px;
 
   background-color: var(--color-primary);
-  color: var(--color-surface);
+  color: #ffffff;
 
   border: none;
   border-radius: var(--radius-sm);
 
   font-family: var(--font-main);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
 
   cursor: pointer;
-  transition: background-color var(--transition-speed);
+  transition: opacity 0.2s, transform 0.2s;
 }
 
-.submit-button:hover {
-  background-color: var(--color-primary-dark);
-}
+.submit-button:hover  { opacity: 0.9; }
+.submit-button:active { transform: scale(0.98); }
 
 .register-link {
   margin-top: 20px;
@@ -197,8 +251,3 @@ body {
 .register-link a:hover {
   color: var(--color-primary-dark);
 }
-
-
-
-
-
