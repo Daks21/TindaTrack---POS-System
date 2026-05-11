@@ -40,13 +40,6 @@ resetFiltersButton.addEventListener("click", function () {
   renderSales(sales);
 });
 
-function formatPeso(amount) {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP"
-  }).format(amount);
-}
-
 function formatReceiptNumber(saleId) {
   return `RCPT-${saleId}`;
 }
@@ -73,8 +66,8 @@ function renderSales(salesArray) {
     row.innerHTML = `
       <td>${formatReceiptNumber(sale.id)}</td>
       <td>${saleDate.toLocaleDateString("en-PH")}</td>
-      <td>${saleDate.toLocaleTimeString("en-PH")}</td>
-      <td>${itemCount} item(s)</td>
+      <td>${saleDate.toLocaleTimeString("en-PH", { hour: '2-digit', minute: '2-digit' })}</td>
+      <td>${itemCount}</td>
       <td>${formatPeso(sale.total)}</td>
       <td>${sale.cashier}</td>
       <td>

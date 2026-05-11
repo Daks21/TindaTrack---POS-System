@@ -1,61 +1,5 @@
-const savedProducts = localStorage.getItem("products");
-
-let products;
+let products = JSON.parse(localStorage.getItem("products") || "[]");
 let editingProductId = null;
-
-if (savedProducts === null) {
-  products = [
-    {
-      id: 1,
-      name: "Instant Coffee",
-      category: "Beverages",
-      price: 8,
-      cost: 5,
-      stock: 20,
-      unit: "sachet"
-    },
-    {
-      id: 2,
-      name: "Canned Sardines",
-      category: "Canned Goods",
-      price: 28,
-      cost: 22,
-      stock: 12,
-      unit: "can"
-    },
-    {
-      id: 3,
-      name: "Bottled Water",
-      category: "Drinks",
-      price: 15,
-      cost: 10,
-      stock: 30,
-      unit: "bottle"
-    },
-    {
-      id: 4,
-      name: "Laundry Detergent",
-      category: "Household",
-      price: 12,
-      cost: 8,
-      stock: 4,
-      unit: "pack"
-    },
-    {
-      id: 5,
-      name: "Ballpen",
-      category: "School Supplies",
-      price: 10,
-      cost: 6,
-      stock: 15,
-      unit: "piece"
-    }
-  ];
-
-  localStorage.setItem("products", JSON.stringify(products));
-} else {
-  products = JSON.parse(savedProducts);
-}
 
 checkAuth();
 
@@ -75,31 +19,60 @@ const productUnitInput = document.getElementById("product-unit");
 
 const addProductButton = document.getElementById("add-product-button");
 const closeModalButton = document.getElementById("close-modal-button");
-const cancelModalButton = document.getElementById("cancel-modal-button");
 const productForm = document.getElementById("product-form");
 
 const productSearchInput = document.getElementById("product-search");
 
+const productCategorySelect = document.getElementById('product-category-select');
 
-productSearchInput.addEventListener("keyup", function () {
-  const query = productSearchInput.value.trim().toLowerCase();
+let activeCategory = 'All';
 
-  const filteredProducts = products.filter(function (product) {
-    return product.name.toLowerCase().includes(query);
+function renderCategorySelect() {
+  if (!productCategorySelect) return;
+
+  const categories = ['All', ...new Set(
+    products.map(function (p) { return p.category; }).filter(Boolean)
+  )];
+
+  productCategorySelect.innerHTML = '';
+  categories.forEach(function (category) {
+    const option = document.createElement('option');
+    option.value = category;
+    option.textContent = category === 'All' ? 'All Categories' : category;
+    if (category === activeCategory) option.selected = true;
+    productCategorySelect.appendChild(option);
   });
+}
 
-  renderProducts(filteredProducts);
-});
+function applyFilters() {
+  const query = productSearchInput.value.trim().toLowerCase();
+  let filtered = products.slice();
+
+  if (activeCategory !== 'All') {
+    filtered = filtered.filter(function (p) { return p.category === activeCategory; });
+  }
+
+  if (query !== '') {
+    filtered = filtered.filter(function (p) { return p.name.toLowerCase().includes(query); });
+  }
+
+  renderProducts(filtered);
+}
+
+productSearchInput.addEventListener("keyup", applyFilters);
+
+if (productCategorySelect) {
+  productCategorySelect.addEventListener('change', function () {
+    activeCategory = productCategorySelect.value;
+    applyFilters();
+  });
+}
 
 addProductButton.addEventListener("click", function () {
   openAddProductModal();
 });
 
 closeModalButton.addEventListener("click", function () {
-  closeProductModal();
-});
-
-cancelModalButton.addEventListener("click", function () {
   closeProductModal();
 });
 
@@ -147,7 +120,9 @@ productForm.addEventListener("submit", function (event) {
 
   localStorage.setItem("products", JSON.stringify(products));
 
-  renderProducts();
+  renderCategorySelect();
+  renderProductsSummary();
+  applyFilters();
 
   closeProductModal();
 });
@@ -161,18 +136,14 @@ productModal.addEventListener("click", function (event) {
 function renderProducts(productList = products) {
   productsTableBody.innerHTML = "";
 
-  productList.forEach(function (product, index) {
+  productList.forEach(function (product) {
     const row = document.createElement("tr");
 
-    const stockClass = product.stock < 5 ? "stock-low" : "stock-ok";
-
     row.innerHTML = `
-      <td>${index + 1}</td>
       <td>${product.name}</td>
       <td>${product.category}</td>
       <td>₱${product.price.toLocaleString()}</td>
-      <td><span class="${stockClass}">${product.stock}</span></td>
-      <td>${product.unit}</td>
+      <td>₱${product.cost.toLocaleString()}</td>
       <td>
         <div class="table-actions">
           <button type="button" class="table-button edit-button" data-id="${product.id}">
@@ -246,7 +217,9 @@ function deleteProduct(productId) {
 
   localStorage.setItem("products", JSON.stringify(products));
 
-  renderProducts();
+  renderCategorySelect();
+  renderProductsSummary();
+  applyFilters();
 }
 
 function openAddProductModal() {
@@ -265,4 +238,28 @@ function closeProductModal() {
   editingProductId = null;
 }
 
+function renderProductsSummary() {
+  var summary = document.getElementById('products-summary');
+  if (!summary) return;
+
+  var totalAssets = products.reduce(function (sum, p) { return sum + (p.cost || 0) * (p.stock || 0); }, 0);
+  var totalProfit = products.reduce(function (sum, p) { return sum + ((p.price || 0) - (p.cost || 0)) * (p.stock || 0); }, 0);
+
+  function peso(n) {
+    return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  summary.innerHTML =
+    '<div class="inventory-stat">' +
+      '<p class="inventory-stat-value products-stat-value">' + peso(totalAssets) + '</p>' +
+      '<p class="inventory-stat-label">Total Assets - Cost</p>' +
+    '</div>' +
+    '<div class="inventory-stat">' +
+      '<p class="inventory-stat-value products-stat-value" style="color:var(--color-primary);">' + peso(totalProfit) + '</p>' +
+      '<p class="inventory-stat-label">Calculated Profit</p>' +
+    '</div>';
+}
+
+renderCategorySelect();
+renderProductsSummary();
 renderProducts();

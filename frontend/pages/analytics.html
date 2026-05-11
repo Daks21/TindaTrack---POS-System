@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (function () {
+      var theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Celso POS | Analytics</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/analytics.css">
+</head>
+<body class="app-body">
+
+  <div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo-box">
+          <i data-lucide="leaf"></i>
+        </div>
+        <span class="sidebar-app-name nav-link-text">Celso POS</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-link" data-page="dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span class="nav-link-text">Dashboard</span>
+        </a>
+        <a href="order.html" class="nav-link" data-page="order">
+          <i data-lucide="shopping-cart"></i>
+          <span class="nav-link-text">New Order</span>
+        </a>
+        <a href="inventory.html" class="nav-link" data-page="inventory">
+          <i data-lucide="archive"></i>
+          <span class="nav-link-text">Inventory</span>
+        </a>
+        <a href="products.html" class="nav-link" data-page="products">
+          <i data-lucide="package"></i>
+          <span class="nav-link-text">Products</span>
+        </a>
+        <a href="analytics.html" class="nav-link" data-page="analytics">
+          <i data-lucide="bar-chart-2"></i>
+          <span class="nav-link-text">Analytics</span>
+        </a>
+        <a href="history.html" class="nav-link" data-page="history">
+          <i data-lucide="clock"></i>
+          <span class="nav-link-text">History</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-user-area">
+        <div class="user-popup" id="user-popup">
+          <a href="account.html" class="user-popup-item">
+            <i data-lucide="user"></i>
+            Account Settings
+          </a>
+          <button type="button" class="user-popup-item logout-item" id="logout-button">
+            <i data-lucide="log-out"></i>
+            Logout
+          </button>
+        </div>
+        <div class="sidebar-user-card" id="user-menu-trigger">
+          <div class="user-avatar" id="user-avatar">--</div>
+          <div class="user-info">
+            <p class="user-name" id="user-name">User</p>
+            <p class="user-role">Cashier</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main-content">
+
+      <!-- Topbar -->
+      <header class="topbar">
+        <h1 id="page-title">Analytics</h1>
+        <div class="topbar-actions">
+          <button type="button" class="topbar-icon-button" id="theme-toggle" title="Toggle theme">
+            <i data-lucide="moon" id="theme-icon"></i>
+          </button>
+          <div class="notif-wrapper">
+            <button type="button" class="topbar-icon-button" id="notif-btn" title="Notifications">
+              <i data-lucide="bell"></i>
+              <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-body">
+
+        <!-- Date Range Bar -->
+        <div class="analytics-date-bar">
+          <div class="date-presets" id="date-presets">
+            <button type="button" class="date-preset-btn" data-range="today">Today</button>
+            <button type="button" class="date-preset-btn" data-range="this-week">This Week</button>
+            <button type="button" class="date-preset-btn is-active" data-range="this-month">This Month</button>
+            <button type="button" class="date-preset-btn" data-range="last-30">Last 30 Days</button>
+            <button type="button" class="date-preset-btn" data-range="custom">Custom</button>
+          </div>
+          <div class="date-custom-row" id="custom-date-row">
+            <input type="date" id="analytics-from" class="date-range-input" />
+            <span class="date-range-sep">to</span>
+            <input type="date" id="analytics-to" class="date-range-input" />
+            <button type="button" class="secondary-button" id="apply-custom-range">Apply</button>
+            <span class="date-range-error" id="custom-date-error"></span>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="analytics-kpi-grid">
+
+          <div class="analytics-kpi-card">
+            <div class="kpi-icon-wrap">
+              <i data-lucide="trending-up"></i>
+            </div>
+            <div class="kpi-body">
+              <p class="kpi-label">Total Revenue</p>
+              <p class="kpi-value" id="kpi-revenue">₱0.00</p>
+            </div>
+          </div>
+
+          <div class="analytics-kpi-card">
+            <div class="kpi-icon-wrap">
+              <i data-lucide="receipt"></i>
+            </div>
+            <div class="kpi-body">
+              <p class="kpi-label">Transactions</p>
+              <p class="kpi-value" id="kpi-transactions">0</p>
+            </div>
+          </div>
+
+          <div class="analytics-kpi-card">
+            <div class="kpi-icon-wrap">
+              <i data-lucide="wallet"></i>
+            </div>
+            <div class="kpi-body">
+              <p class="kpi-label">Avg. Order Value</p>
+              <p class="kpi-value" id="kpi-avg-order">₱0.00</p>
+            </div>
+          </div>
+
+          <div class="analytics-kpi-card">
+            <div class="kpi-icon-wrap">
+              <i data-lucide="package"></i>
+            </div>
+            <div class="kpi-body">
+              <p class="kpi-label">Units Sold</p>
+              <p class="kpi-value" id="kpi-units">0</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Activity Heatmap -->
+        <div class="analytics-chart-card full-width heatmap-card" style="margin-bottom:20px">
+          <div class="chart-card-header">
+            <div class="chart-card-title">
+              <h3>Sales Activity</h3>
+              <p>Daily revenue over the last 12 months</p>
+            </div>
+            <label class="pin-toggle-wrap">
+              <input type="checkbox" class="widget-pin-checkbox" data-widget="activity-heatmap" />
+              <span class="pin-toggle-track"><span class="pin-toggle-thumb"></span></span>
+              <span class="pin-toggle-text">Pin to Dashboard</span>
+            </label>
+          </div>
+          <div class="heatmap-wrapper">
+            <div class="heatmap-main">
+              <div class="heatmap-day-labels">
+                <span></span>
+                <span>Mon</span>
+                <span></span>
+                <span>Wed</span>
+                <span></span>
+                <span>Fri</span>
+                <span></span>
+              </div>
+              <div class="heatmap-scroll-area">
+                <div class="heatmap-months-container" id="heatmap-months"></div>
+                <div class="heatmap-cells" id="heatmap-cells"></div>
+              </div>
+            </div>
+            <div class="heatmap-legend">
+              <span class="heatmap-legend-label">Less</span>
+              <span class="heatmap-cell heatmap-legend-cell" data-level="0"></span>
+              <span class="heatmap-cell heatmap-legend-cell" data-level="1"></span>
+              <span class="heatmap-cell heatmap-legend-cell" data-level="2"></span>
+              <span class="heatmap-cell heatmap-legend-cell" data-level="3"></span>
+              <span class="heatmap-cell heatmap-legend-cell" data-level="4"></span>
+              <span class="heatmap-legend-label">More</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Widgets -->
+        <div class="analytics-charts-grid">
+
+          <!-- Revenue Over Time (full width) -->
+          <div class="analytics-chart-card full-width">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>Revenue Over Time</h3>
+                <p>Daily revenue for the selected period</p>
+              </div>
+              <label class="pin-toggle-wrap">
+                <input type="checkbox" class="widget-pin-checkbox" data-widget="revenue-chart" />
+                <span class="pin-toggle-track"><span class="pin-toggle-thumb"></span></span>
+                <span class="pin-toggle-text">Pin to Dashboard</span>
+              </label>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chart-revenue"></canvas>
+              <div class="chart-empty-state" id="empty-revenue">
+                <i data-lucide="trending-up"></i>
+                <p>No sales data for this period</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Products by Revenue -->
+          <div class="analytics-chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>Top Products by Revenue</h3>
+                <p>Top 5 products by total sales amount</p>
+              </div>
+              <label class="pin-toggle-wrap">
+                <input type="checkbox" class="widget-pin-checkbox" data-widget="top-products-revenue" />
+                <span class="pin-toggle-track"><span class="pin-toggle-thumb"></span></span>
+                <span class="pin-toggle-text">Pin to Dashboard</span>
+              </label>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chart-top-revenue"></canvas>
+              <div class="chart-empty-state" id="empty-top-revenue">
+                <i data-lucide="bar-chart-2"></i>
+                <p>No sales data for this period</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Products by Quantity -->
+          <div class="analytics-chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>Top Products by Quantity</h3>
+                <p>Top 5 products by units sold</p>
+              </div>
+              <label class="pin-toggle-wrap">
+                <input type="checkbox" class="widget-pin-checkbox" data-widget="top-products-qty" />
+                <span class="pin-toggle-track"><span class="pin-toggle-thumb"></span></span>
+                <span class="pin-toggle-text">Pin to Dashboard</span>
+              </label>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chart-top-qty"></canvas>
+              <div class="chart-empty-state" id="empty-top-qty">
+                <i data-lucide="package"></i>
+                <p>No sales data for this period</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sales by Day of Week (full width) -->
+          <div class="analytics-chart-card full-width">
+            <div class="chart-card-header">
+              <div class="chart-card-title">
+                <h3>Sales by Day of Week</h3>
+                <p>Revenue distribution across weekdays</p>
+              </div>
+              <label class="pin-toggle-wrap">
+                <input type="checkbox" class="widget-pin-checkbox" data-widget="sales-by-day" />
+                <span class="pin-toggle-track"><span class="pin-toggle-thumb"></span></span>
+                <span class="pin-toggle-text">Pin to Dashboard</span>
+              </label>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chart-by-day"></canvas>
+              <div class="chart-empty-state" id="empty-by-day">
+                <i data-lucide="calendar"></i>
+                <p>No sales data for this period</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Heatmap tooltip -->
+  <div class="heatmap-tooltip" id="heatmap-tooltip">
+    <strong class="heatmap-tooltip-date"></strong>
+    <span class="heatmap-tooltip-value"></span>
+  </div>
+
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/core/theme.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/data.js"></script>
+  <script src="../js/components/notifications.js"></script>
+  <script src="../js/pages/analytics.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

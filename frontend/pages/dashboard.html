@@ -1,223 +1,317 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    (function () {
+      var theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>TindaTrack | Dashboard</title>
+
+  <title>Celso POS | Dashboard</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/dashboard.css">
 </head>
 <body class="app-body">
 
   <div class="app-layout">
-    
+
+    <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="sidebar-logo-box">TT</div>
+
+      <div class="sidebar-header">
+        <div class="sidebar-logo-box">
+          <i data-lucide="leaf"></i>
+        </div>
+        <span class="sidebar-app-name nav-link-text">Celso POS</span>
       </div>
 
       <nav class="sidebar-nav">
-        <a href="dashboard.html" class="nav-link active" data-page="dashboard">
-          <img src="../assets/images/icons-light/dashboard-light.svg" alt="Dashboard" class="nav-icon">
+        <a href="dashboard.html" class="nav-link" data-page="dashboard">
+          <i data-lucide="layout-dashboard"></i>
           <span class="nav-link-text">Dashboard</span>
         </a>
-        <a href="products.html" class="nav-link" data-page="products">
-          <img src="../assets/images/icons-light/products-light.svg" alt="Products" class="nav-icon">
-          <span class="nav-link-text">Products</span>
+        <a href="order.html" class="nav-link" data-page="order">
+          <i data-lucide="shopping-cart"></i>
+          <span class="nav-link-text">New Order</span>
         </a>
         <a href="inventory.html" class="nav-link" data-page="inventory">
-          <img src="../assets/images/icons-light/inventory-light.svg" alt="Inventory" class="nav-icon">
+          <i data-lucide="archive"></i>
           <span class="nav-link-text">Inventory</span>
         </a>
-        <a href="sales.html" class="nav-link" data-page="sales">
-          <img src="../assets/images/icons-light/sales-light.svg" alt="Sales" class="nav-icon">
-          <span class="nav-link-text">Sales</span>
+        <a href="products.html" class="nav-link" data-page="products">
+          <i data-lucide="package"></i>
+          <span class="nav-link-text">Products</span>
+        </a>
+        <a href="analytics.html" class="nav-link" data-page="analytics">
+          <i data-lucide="bar-chart-2"></i>
+          <span class="nav-link-text">Analytics</span>
         </a>
         <a href="history.html" class="nav-link" data-page="history">
-          <img src="../assets/images/icons-light/history-light.svg" alt="History" class="nav-icon">
+          <i data-lucide="clock"></i>
           <span class="nav-link-text">History</span>
         </a>
       </nav>
 
+      <div class="sidebar-user-area">
+
+        <!-- Popup (appears above) -->
+        <div class="user-popup" id="user-popup">
+          <a href="account.html" class="user-popup-item">
+            <i data-lucide="user"></i>
+            Account Settings
+          </a>
+          <button
+            type="button"
+            class="user-popup-item logout-item"
+            id="logout-button"
+          >
+            <i data-lucide="log-out"></i>
+            Logout
+          </button>
+        </div>
+
+        <!-- User Card -->
+        <div class="sidebar-user-card" id="user-menu-trigger">
+          <div class="user-avatar" id="user-avatar">--</div>
+          <div class="user-info">
+            <p class="user-name" id="user-name">User</p>
+            <p class="user-role">Cashier</p>
+          </div>
+        </div>
+
+      </div>
     </aside>
 
     <div class="main-content">
+
+      <!-- Topbar -->
       <header class="topbar">
-        <div>
-          <h1>Dashboard</h1>      
-          <p>Business overview and store activity</p>
-        </div>
+        <h1 id="page-title">Dashboard</h1>
 
         <div class="topbar-actions">
-          <div class="account-dropdown-wrapper">
-            <button type="button" class="account-button" id="account-menu-button" aria-label="Account menu">
-              <img src="../assets/images/icons-light/account-light.svg" alt="Account" class="account-icon">
+
+          <button
+            type="button"
+            class="topbar-icon-button"
+            id="theme-toggle"
+            title="Toggle theme"
+          >
+            <i data-lucide="moon" id="theme-icon"></i>
+          </button>
+
+          <div class="notif-wrapper">
+            <button
+              type="button"
+              class="topbar-icon-button"
+              id="notif-btn"
+              title="Notifications"
+            >
+              <i data-lucide="bell"></i>
+              <span class="notif-badge" id="notif-badge" style="display:none">0</span>
             </button>
-            <div class="account-dropdown-menu" id="account-dropdown" role="menu">
-              <a href="account.html" role="menuitem" class="account-menu-item">Account Settings</a>
-              <button type="button" class="account-menu-item logout-item" id="account-logout" role="menuitem">
-                Logout
-              </button>
-            </div>
           </div>
+
         </div>
       </header>
 
       <main class="page-body">
-        
+
         <section class="summary-cards">
+
           <div class="summary-card">
-            <div class="summary-icon">
-              <img src="../assets/images/icons-light/todays-revenue-light.svg" alt="Revenue" class="card-icon" style="width: 44px; height: 44px;">
+            <div class="summary-card-header">
+              <span class="summary-label">Today's Revenue</span>
+              <div class="summary-icon">
+                <i data-lucide="trending-up"></i>
+              </div>
             </div>
-            <div>
-              <p class="summary-label">Today's Revenue</p>
-              <p class="summary-value" id="total-sales-today">₱0.00</p>
-            </div>
+            <p class="summary-value" id="total-sales-today">₱0.00</p>
+            <p class="summary-trend">Updated live</p>
           </div>
 
           <div class="summary-card">
-            <div class="summary-icon">
-              <img src="../assets/images/icons-light/total-products-light.svg" alt="Products" class="card-icon" style="width: 44px; height: 44px;">
+            <div class="summary-card-header">
+              <span class="summary-label">Total Products</span>
+              <div class="summary-icon">
+                <i data-lucide="package"></i>
+              </div>
             </div>
-            <div>
-              <p class="summary-label">Total Products</p>
-              <p class="summary-value" id="total-products">0</p>
-            </div>
+            <p class="summary-value" id="total-products">0</p>
+            <p class="summary-trend">In catalog</p>
           </div>
 
           <div class="summary-card">
-            <div class="summary-icon">
-              <img src="../assets/images/icons-light/low-stock-items-light.svg" alt="Low Stock" class="card-icon" style="width: 44px; height: 44px;">
+            <div class="summary-card-header">
+              <span class="summary-label">Low Stock Items</span>
+              <div class="summary-icon">
+                <i data-lucide="alert-triangle"></i>
+              </div>
             </div>
-            <div>
-              <p class="summary-label">Low Stock Items</p>
-              <p class="summary-value" id="low-stock-items">0</p>
-            </div>
+            <p class="summary-value" id="low-stock-items">0</p>
+            <p class="summary-trend">Need restocking</p>
           </div>
 
           <div class="summary-card">
-            <div class="summary-icon">
-              <img src="../assets/images/icons-light/transactions-today-light.svg" alt="Transactions" class="card-icon" style="width: 44px; height: 44px;">
+            <div class="summary-card-header">
+              <span class="summary-label">Transactions Today</span>
+              <div class="summary-icon">
+                <i data-lucide="receipt"></i>
+              </div>
             </div>
-            <div>
-              <p class="summary-label">Transactions Today</p>
-              <p class="summary-value" id="transactions-today">0</p>
-            </div>
+            <p class="summary-value" id="transactions-today">0</p>
+            <p class="summary-trend">Sales recorded</p>
+          </div>
+
+        </section>
+
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>Recent Transactions</h2>
+            <p>Latest sales recorded today</p>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Receipt #</th>
+                  <th>Date &amp; Time</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recent-transactions-body">
+                <tr>
+                  <td>RCPT-001</td>
+                  <td>May 10, 2026 - 9:15 AM</td>
+                  <td>3 items</td>
+                  <td>₱185.00</td>
+                  <td><span class="status-badge status-completed">Completed</span></td>
+                </tr>
+                <tr>
+                  <td>RCPT-002</td>
+                  <td>May 10, 2026 - 10:02 AM</td>
+                  <td>5 items</td>
+                  <td>₱420.00</td>
+                  <td><span class="status-badge status-completed">Completed</span></td>
+                </tr>
+                <tr>
+                  <td>RCPT-003</td>
+                  <td>May 10, 2026 - 11:30 AM</td>
+                  <td>2 items</td>
+                  <td>₱95.00</td>
+                  <td><span class="status-badge status-completed">Completed</span></td>
+                </tr>
+                <tr>
+                  <td>RCPT-004</td>
+                  <td>May 10, 2026 - 1:10 PM</td>
+                  <td>4 items</td>
+                  <td>₱260.00</td>
+                  <td><span class="status-badge status-pending">Pending</span></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
         <section class="dashboard-section">
-            <div class="section-header">
-              <h2>Recent Transactions</h2>
-              <p>Latest sales recorded today</p>
-            </div>
+          <div class="section-header">
+            <h2>Low Stock Alerts</h2>
+            <p>Products that need attention soon</p>
+          </div>
 
-            <div class="table-wrapper">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Receipt #</th>
-                    <th>Date & Time</th>
-                    <th>Items</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  <tr>
-                    <td>RCPT-001</td>
-                    <td>May 10, 2026 - 9:15 AM</td>
-                    <td>3 items</td>
-                    <td>₱185.00</td>
-                    <td><span class="status-badge status-completed">Completed</span></td>
-                  </tr>
-
-                  <tr>
-                    <td>RCPT-002</td>
-                    <td>May 10, 2026 - 10:02 AM</td>
-                    <td>5 items</td>
-                    <td>₱420.00</td>
-                    <td><span class="status-badge status-completed">Completed</span></td>
-                  </tr>
-
-                  <tr>
-                    <td>RCPT-003</td>
-                    <td>May 10, 2026 - 11:30 AM</td>
-                    <td>2 items</td>
-                    <td>₱95.00</td>
-                    <td><span class="status-badge status-completed">Completed</span></td>
-                  </tr>
-
-                  <tr>
-                    <td>RCPT-004</td>
-                    <td>May 10, 2026 - 1:10 PM</td>
-                    <td>4 items</td>
-                    <td>₱260.00</td>
-                    <td><span class="status-badge status-pending">Pending</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="dashboard-section">
-            <div class="section-header">
-              <h2>Low Stock Alerts</h2>
-              <p>Products that need attention soon</p>
-            </div>
-
-            <div class="stock-alert-list">
-              <div class="stock-alert-item">
-                <div class="stock-info">
-                  <span class="status-dot status-critical"></span>
-                  <div>
-                    <h3>Instant Coffee Sachet</h3>
-                    <p>Current stock: 2 pcs</p>
-                  </div>
+          <div class="stock-alert-list" id="stock-alert-list">
+            <div class="stock-alert-item">
+              <div class="stock-info">
+                <span class="status-dot status-critical"></span>
+                <div>
+                  <h3>Instant Coffee Sachet</h3>
+                  <p>Current stock: 2 pcs</p>
                 </div>
-
-                <span class="stock-label critical-label">Critical</span>
               </div>
-
-              <div class="stock-alert-item">
-                <div class="stock-info">
-                  <span class="status-dot status-low"></span>
-                  <div>
-                    <h3>Canned Sardines</h3>
-                    <p>Current stock: 4 pcs</p>
-                  </div>
-                </div>
-
-                <span class="stock-label low-label">Low</span>
-              </div>
-
-              <div class="stock-alert-item">
-                <div class="stock-info">
-                  <span class="status-dot status-fine"></span>
-                  <div>
-                    <h3>Bottled Water 500ml</h3>
-                    <p>Current stock: 8 pcs</p>
-                  </div>
-                </div>
-
-                <span class="stock-label fine-label">Fine</span>
-              </div>
+              <span class="stock-label critical-label">Critical</span>
             </div>
-          </section>
+
+            <div class="stock-alert-item">
+              <div class="stock-info">
+                <span class="status-dot status-low"></span>
+                <div>
+                  <h3>Canned Sardines</h3>
+                  <p>Current stock: 4 pcs</p>
+                </div>
+              </div>
+              <span class="stock-label low-label">Low</span>
+            </div>
+
+            <div class="stock-alert-item">
+              <div class="stock-info">
+                <span class="status-dot status-fine"></span>
+                <div>
+                  <h3>Bottled Water 500ml</h3>
+                  <p>Current stock: 8 pcs</p>
+                </div>
+              </div>
+              <span class="stock-label fine-label">Fine</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="dashboard-section" id="dashboard-analytics-section">
+          <div class="dashboard-section-row">
+            <div class="section-header" style="margin-bottom:0">
+              <h2>Analytics Overview</h2>
+              <p>Last 30 days — pinned widgets</p>
+            </div>
+            <a href="analytics.html" class="customize-dashboard-link">
+              <i data-lucide="sliders-horizontal"></i>
+              Customize Dashboard
+            </a>
+          </div>
+
+          <div id="dashboard-analytics-widgets"></div>
+
+          <div class="dashboard-analytics-empty" id="dashboard-analytics-empty" style="display:none">
+            <p>No analytics widgets pinned to this dashboard yet.</p>
+            <a href="analytics.html">
+              <i data-lucide="plus"></i>
+              Go to Analytics
+            </a>
+          </div>
+        </section>
 
       </main>
 
     </div>
   </div>
 
-  <script src="../js/auth.js"></script>
-  <script src="../js/dashboard.js"></script>
-  <script src="../js/sidebar.js"></script>
-  <script src="../js/theme.js"></script>
-  <script src="../js/account.js"></script>
+  <!-- Heatmap tooltip (shared by pinned Sales Activity widget) -->
+  <div class="heatmap-tooltip" id="heatmap-tooltip">
+    <strong class="heatmap-tooltip-date"></strong>
+    <span class="heatmap-tooltip-value"></span>
+  </div>
+
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/core/theme.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/data.js"></script>
+  <script src="../js/components/notifications.js"></script>
+  <script src="../js/pages/dashboard.js"></script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -1,68 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    (function () {
+      var theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>TindaTrack | Products</title>
+  <title>Celso POS | Products</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 
   <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/inventory.css">
+  <link rel="stylesheet" href="../css/pages/products.css">
 </head>
 <body class="app-body">
 
   <div class="app-layout">
 
+    <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="sidebar-logo-box">TT</div>
+
+      <div class="sidebar-header">
+        <div class="sidebar-logo-box">
+          <i data-lucide="leaf"></i>
+        </div>
+        <span class="sidebar-app-name nav-link-text">Celso POS</span>
       </div>
 
       <nav class="sidebar-nav">
-        <a href="dashboard.html" class="nav-link active" data-page="dashboard">
-          <img src="../assets/images/icons-light/dashboard-light.svg" alt="Dashboard" class="nav-icon">
+        <a href="dashboard.html" class="nav-link" data-page="dashboard">
+          <i data-lucide="layout-dashboard"></i>
           <span class="nav-link-text">Dashboard</span>
         </a>
-        <a href="products.html" class="nav-link" data-page="products">
-          <img src="../assets/images/icons-light/products-light.svg" alt="Products" class="nav-icon">
-          <span class="nav-link-text">Products</span>
+        <a href="order.html" class="nav-link" data-page="order">
+          <i data-lucide="shopping-cart"></i>
+          <span class="nav-link-text">New Order</span>
         </a>
         <a href="inventory.html" class="nav-link" data-page="inventory">
-          <img src="../assets/images/icons-light/inventory-light.svg" alt="Inventory" class="nav-icon">
+          <i data-lucide="archive"></i>
           <span class="nav-link-text">Inventory</span>
         </a>
-        <a href="sales.html" class="nav-link" data-page="sales">
-          <img src="../assets/images/icons-light/sales-light.svg" alt="Sales" class="nav-icon">
-          <span class="nav-link-text">Sales</span>
+        <a href="products.html" class="nav-link" data-page="products">
+          <i data-lucide="package"></i>
+          <span class="nav-link-text">Products</span>
+        </a>
+        <a href="analytics.html" class="nav-link" data-page="analytics">
+          <i data-lucide="bar-chart-2"></i>
+          <span class="nav-link-text">Analytics</span>
         </a>
         <a href="history.html" class="nav-link" data-page="history">
-          <img src="../assets/images/icons-light/history-light.svg" alt="History" class="nav-icon">
+          <i data-lucide="clock"></i>
           <span class="nav-link-text">History</span>
         </a>
       </nav>
 
+      <div class="sidebar-user-area">
+
+        <div class="user-popup" id="user-popup">
+          <a href="account.html" class="user-popup-item">
+            <i data-lucide="user"></i>
+            Account Settings
+          </a>
+          <button
+            type="button"
+            class="user-popup-item logout-item"
+            id="logout-button"
+          >
+            <i data-lucide="log-out"></i>
+            Logout
+          </button>
+        </div>
+
+        <div class="sidebar-user-card" id="user-menu-trigger">
+          <div class="user-avatar" id="user-avatar">--</div>
+          <div class="user-info">
+            <p class="user-name" id="user-name">User</p>
+            <p class="user-role">Cashier</p>
+          </div>
+        </div>
+
+      </div>
     </aside>
 
     <div class="main-content">
 
+      <!-- Topbar -->
       <header class="topbar">
-        <div>
-          <h1>Products</h1>
-          <p>Manage your product list, prices, stock, and units</p>
-        </div>
+        <h1 id="page-title">Products</h1>
 
         <div class="topbar-actions">
-          <div class="account-dropdown-wrapper">
-            <button type="button" class="account-button" id="account-menu-button" aria-label="Account menu">
-              <img src="../assets/images/icons-light/account-light.svg" alt="Account" class="account-icon">
+
+          <button
+            type="button"
+            class="topbar-icon-button"
+            id="theme-toggle"
+            title="Toggle theme"
+          >
+            <i data-lucide="moon" id="theme-icon"></i>
+          </button>
+
+          <div class="notif-wrapper">
+            <button
+              type="button"
+              class="topbar-icon-button"
+              id="notif-btn"
+              title="Notifications"
+            >
+              <i data-lucide="bell"></i>
+              <span class="notif-badge" id="notif-badge" style="display:none">0</span>
             </button>
-            <div class="account-dropdown-menu" id="account-dropdown" role="menu">
-              <a href="account.html" role="menuitem" class="account-menu-item">Account Settings</a>
-              <button type="button" class="account-menu-item logout-item" id="account-logout" role="menuitem">
-                Logout
-              </button>
-            </div>
           </div>
+
         </div>
       </header>
 
@@ -80,29 +141,32 @@
             </button>
           </div>
 
+          <!-- Summary Row -->
+          <div class="inventory-summary" id="products-summary"></div>
+
           <div class="products-toolbar">
-            <input 
-              type="text" 
-              id="product-search" 
-              class="search-input" 
+            <input
+              type="text"
+              id="product-search"
+              class="search-input"
               placeholder="Search product by name"
             />
+            <select id="product-category-select" class="filter-select">
+              <!-- Options rendered by JS -->
+            </select>
           </div>
 
           <div class="table-wrapper">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>#</th>
                   <th>Product Name</th>
                   <th>Category</th>
                   <th>Price</th>
-                  <th>Stock</th>
-                  <th>Unit</th>
+                  <th>Cost</th>
                   <th>Actions</th>
                 </tr>
               </thead>
-
               <tbody id="products-table-body">
                 <!-- Product rows will be rendered by products.js -->
               </tbody>
@@ -127,10 +191,10 @@
       <form id="product-form" class="product-form" autocomplete="off">
         <div class="form-group">
           <label for="product-name">Product Name</label>
-          <input 
-            type="text" 
-            id="product-name" 
-            name="product-name" 
+          <input
+            type="text"
+            id="product-name"
+            name="product-name"
             placeholder="Enter product name"
             required
             autocomplete="off"
@@ -140,10 +204,10 @@
 
         <div class="form-group">
           <label for="product-category">Category</label>
-          <input 
-            type="text" 
-            id="product-category" 
-            name="product-category" 
+          <input
+            type="text"
+            id="product-category"
+            name="product-category"
             placeholder="Enter category"
             required
             autocomplete="off"
@@ -154,10 +218,11 @@
         <div class="form-row">
           <div class="form-group">
             <label for="product-price">Price</label>
-            <input 
-              type="number" 
-              id="product-price" 
-              name="product-price" 
+            <input
+              type="number"
+              id="product-price"
+              name="product-price"
+              class="no-spinner"
               placeholder="0.00"
               required
               autocomplete="off"
@@ -167,10 +232,11 @@
 
           <div class="form-group">
             <label for="product-cost">Cost</label>
-            <input 
-              type="number" 
-              id="product-cost" 
-              name="product-cost" 
+            <input
+              type="number"
+              id="product-cost"
+              name="product-cost"
+              class="no-spinner"
               placeholder="0.00"
               required
               autocomplete="off"
@@ -182,10 +248,11 @@
         <div class="form-row">
           <div class="form-group">
             <label for="product-stock">Stock</label>
-            <input 
-              type="number" 
-              id="product-stock" 
-              name="product-stock" 
+            <input
+              type="number"
+              id="product-stock"
+              name="product-stock"
+              class="no-spinner"
               placeholder="0"
               required
               autocomplete="off"
@@ -208,10 +275,6 @@
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="secondary-button" id="cancel-modal-button">
-            Cancel
-          </button>
-
           <button type="submit" class="submit-button">
             Save Product
           </button>
@@ -220,10 +283,12 @@
     </div>
   </div>
 
-  <script src="../js/auth.js"></script>
-  <script src="../js/products.js"></script>
-  <script src="../js/sidebar.js"></script>
-  <script src="../js/theme.js"></script>
-  <script src="../js/account.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/core/theme.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/data.js"></script>
+  <script src="../js/components/notifications.js"></script>
+  <script src="../js/pages/products.js"></script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

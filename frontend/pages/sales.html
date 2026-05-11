@@ -1,244 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    (function () {
+      var theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>TindaTrack | Sales</title>
+  <title>Celso POS | Sales</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 
   <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
 </head>
 <body class="app-body">
 
   <div class="app-layout">
 
+    <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="sidebar-logo-box">TT</div>
+
+      <div class="sidebar-header">
+        <div class="sidebar-logo-box">
+          <i data-lucide="leaf"></i>
+        </div>
+        <span class="sidebar-app-name nav-link-text">Celso POS</span>
       </div>
 
       <nav class="sidebar-nav">
-        <a href="dashboard.html" class="nav-link active" data-page="dashboard">
-          <img src="../assets/images/icons-light/dashboard-light.svg" alt="Dashboard" class="nav-icon">
+        <a href="dashboard.html" class="nav-link" data-page="dashboard">
+          <i data-lucide="layout-dashboard"></i>
           <span class="nav-link-text">Dashboard</span>
         </a>
-        <a href="products.html" class="nav-link" data-page="products">
-          <img src="../assets/images/icons-light/products-light.svg" alt="Products" class="nav-icon">
-          <span class="nav-link-text">Products</span>
+        <a href="order.html" class="nav-link" data-page="order">
+          <i data-lucide="shopping-cart"></i>
+          <span class="nav-link-text">New Order</span>
         </a>
         <a href="inventory.html" class="nav-link" data-page="inventory">
-          <img src="../assets/images/icons-light/inventory-light.svg" alt="Inventory" class="nav-icon">
+          <i data-lucide="archive"></i>
           <span class="nav-link-text">Inventory</span>
         </a>
-        <a href="sales.html" class="nav-link" data-page="sales">
-          <img src="../assets/images/icons-light/sales-light.svg" alt="Sales" class="nav-icon">
-          <span class="nav-link-text">Sales</span>
+        <a href="products.html" class="nav-link" data-page="products">
+          <i data-lucide="package"></i>
+          <span class="nav-link-text">Products</span>
+        </a>
+        <a href="analytics.html" class="nav-link" data-page="analytics">
+          <i data-lucide="bar-chart-2"></i>
+          <span class="nav-link-text">Analytics</span>
         </a>
         <a href="history.html" class="nav-link" data-page="history">
-          <img src="../assets/images/icons-light/history-light.svg" alt="History" class="nav-icon">
+          <i data-lucide="clock"></i>
           <span class="nav-link-text">History</span>
         </a>
       </nav>
 
+      <div class="sidebar-user-area">
+
+        <div class="user-popup" id="user-popup">
+          <a href="account.html" class="user-popup-item">
+            <i data-lucide="user"></i>
+            Account Settings
+          </a>
+          <button
+            type="button"
+            class="user-popup-item logout-item"
+            id="logout-button"
+          >
+            <i data-lucide="log-out"></i>
+            Logout
+          </button>
+        </div>
+
+        <div class="sidebar-user-card" id="user-menu-trigger">
+          <div class="user-avatar" id="user-avatar">--</div>
+          <div class="user-info">
+            <p class="user-name" id="user-name">User</p>
+            <p class="user-role">Cashier</p>
+          </div>
+        </div>
+
+      </div>
     </aside>
 
     <div class="main-content">
 
+      <!-- Topbar -->
       <header class="topbar">
-        <div>
-          <h1>Sales</h1>
-          <p>Process customer orders and manage current transactions</p>
-        </div>
+        <h1 id="page-title">Sales</h1>
 
         <div class="topbar-actions">
-          <div class="account-dropdown-wrapper">
-            <button type="button" class="account-button" id="account-menu-button" aria-label="Account menu">
-              <img src="../assets/images/icons-light/account-light.svg" alt="Account" class="account-icon">
+
+          <button
+            type="button"
+            class="topbar-icon-button"
+            id="theme-toggle"
+            title="Toggle theme"
+          >
+            <i data-lucide="moon" id="theme-icon"></i>
+          </button>
+
+          <div class="notif-wrapper">
+            <button
+              type="button"
+              class="topbar-icon-button"
+              id="notif-btn"
+              title="Notifications"
+            >
+              <i data-lucide="bell"></i>
+              <span class="notif-badge" id="notif-badge" style="display:none">0</span>
             </button>
-            <div class="account-dropdown-menu" id="account-dropdown" role="menu">
-              <a href="account.html" role="menuitem" class="account-menu-item">Account Settings</a>
-              <button type="button" class="account-menu-item logout-item" id="account-logout" role="menuitem">
-                Logout
-              </button>
-            </div>
           </div>
+
         </div>
       </header>
 
       <main class="page-body">
 
-        <section class="pos-layout">
-
-          <div class="pos-products">
-            <div class="pos-section-header">
-              <h2>Products</h2>
-              <p>Select products to add them to the cart</p>
-            </div>
-
-            <input
-              type="text"
-              id="pos-product-search"
-              class="search-input"
-              placeholder="Search products"
-              autocomplete="off"
-            />
-
-            <div class="pos-product-grid" id="pos-product-grid">
-              <!-- Product cards will be rendered by sales.js -->
-            </div>
+        <div class="coming-soon-wrapper">
+          <div class="coming-soon-icon">
+            <i data-lucide="bar-chart-2"></i>
           </div>
-
-          <aside class="pos-cart">
-            <div class="pos-section-header">
-              <h2>Current Order</h2>
-              <p>Review items before checkout</p>
-            </div>
-
-            <div class="cart-items" id="cart-items">
-              <p class="cart-empty-message">No items added yet.</p>
-            </div>
-
-            <div class="cart-summary">
-              <div class="cart-summary-row">
-                <span>Subtotal</span>
-                <strong id="cart-subtotal">₱0.00</strong>
-              </div>
-
-              <div class="cart-summary-row">
-                <span>Tax</span>
-                <strong id="cart-tax">₱0.00</strong>
-              </div>
-
-              <div class="cart-summary-row grand-total">
-                <span>Grand Total</span>
-                <strong id="cart-total">₱0.00</strong>
-              </div>
-            </div>
-
-            <div class="payment-section">
-              <label for="payment-amount">Payment Amount</label>
-              <input
-                type="number"
-                id="payment-amount"
-                class="payment-input"
-                placeholder="Enter payment amount"
-                min="0"
-              />
-
-              <div class="change-display">
-                <span>Change</span>
-                <strong id="change-amount">₱0.00</strong>
-              </div>
-
-              <p id="payment-warning" class="form-error"></p>
-            </div>
-
-            <div class="cart-actions">
-              <p id="sale-message" class="sale-message"></p>
-
-              <button type="button" class="submit-button" id="complete-sale-button">
-                Complete Sale
-              </button>
-
-              <button type="button" class="secondary-button" id="clear-cart-button">
-                Clear Cart
-              </button>
-            </div>
-          </aside>
-
-        </section>
+          <h2 class="coming-soon-title">Sales Analytics</h2>
+          <p class="coming-soon-text">
+            Financial reports and sales analysis will be available here.
+          </p>
+        </div>
 
       </main>
 
     </div>
   </div>
 
-  <div class="modal-overlay" id="receipt-modal">
-    <div class="receipt-modal-card">
-
-      <div class="receipt" id="receipt">
-        <div class="receipt-header">
-          <h2>TindaTrack Store</h2>
-          <p>123 Sample Street, Quezon City</p>
-          <p>Philippines</p>
-
-          <div class="receipt-meta">
-            <p>Receipt #: <span id="receipt-number">---</span></p>
-            <p>Date: <span id="receipt-date">---</span></p>
-            <p>Time: <span id="receipt-time">---</span></p>
-            <p>Cashier: <span id="receipt-cashier">---</span></p>
-          </div>
-        </div>
-
-        <div class="receipt-divider"></div>
-
-        <div class="receipt-items">
-          <table>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-
-            <tbody id="receipt-items-body">
-              <!-- Receipt items will be rendered by JS -->
-            </tbody>
-          </table>
-        </div>
-
-        <div class="receipt-divider"></div>
-
-        <div class="receipt-summary">
-          <div class="receipt-row">
-            <span>Subtotal</span>
-            <strong id="receipt-subtotal">₱0.00</strong>
-          </div>
-
-          <div class="receipt-row receipt-grand-total">
-            <span>Grand Total</span>
-            <strong id="receipt-grand-total">₱0.00</strong>
-          </div>
-
-          <div class="receipt-row">
-            <span>Payment Received</span>
-            <strong id="receipt-payment">₱0.00</strong>
-          </div>
-
-          <div class="receipt-row">
-            <span>Change</span>
-            <strong id="receipt-change">₱0.00</strong>
-          </div>
-        </div>
-
-        <div class="receipt-divider"></div>
-
-        <div class="receipt-footer">
-          <p>Thank you for your purchase!</p>
-        </div>
-      </div>
-
-      <div class="receipt-actions">
-        <button type="button" class="submit-button" id="print-receipt-button">
-          Print Receipt
-        </button>
-
-        <button type="button" class="secondary-button" id="new-sale-button">
-          New Sale
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <script src="../js/auth.js"></script>
-  <script src="../js/receipt.js"></script>
-  <script src="../js/sales.js"></script>
-  <script src="../js/sidebar.js"></script>
-  <script src="../js/theme.js"></script>
-  <script src="../js/account.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/core/theme.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/data.js"></script>
+  <script src="../js/components/notifications.js"></script>
+  <script src="../js/pages/sales.js"></script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

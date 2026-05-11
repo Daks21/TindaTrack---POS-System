@@ -12,7 +12,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Celso POS | Sales History</title>
+  <title>Celso POS | New Order</title>
 
   <link
     href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="../css/main.css">
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
-  <link rel="stylesheet" href="../css/pages/history.css">
+  <link rel="stylesheet" href="../css/pages/order.css">
 </head>
 <body class="app-body">
 
@@ -98,7 +98,7 @@
 
       <!-- Topbar -->
       <header class="topbar">
-        <h1 id="page-title">Sales History</h1>
+        <h1 id="page-title">New Order</h1>
 
         <div class="topbar-actions">
 
@@ -128,70 +128,97 @@
 
       <main class="page-body">
 
-        <section class="page-section">
+        <section class="pos-layout">
 
-          <div class="products-header">
-            <div>
-              <h2>Sales History</h2>
-              <p>Search, filter, and view transaction details</p>
+          <div class="pos-products">
+            <div class="pos-section-header">
+              <h2>Point of Sale</h2>
+              <p>Select products to add them to the cart</p>
+            </div>
+
+            <div class="pos-toolbar">
+              <div class="pos-search-wrapper">
+                <i data-lucide="search" class="pos-search-icon"></i>
+                <input
+                  type="text"
+                  id="pos-product-search"
+                  class="pos-search-input"
+                  placeholder="Search products..."
+                  autocomplete="off"
+                />
+              </div>
+              <div class="pos-category-pills" id="pos-category-pills">
+                <!-- Pills rendered by JS -->
+              </div>
+              <select id="pos-category-select" class="pos-category-select">
+                <!-- Options rendered by JS -->
+              </select>
+            </div>
+
+            <div class="pos-product-grid" id="pos-product-grid">
+              <!-- Product cards will be rendered by order.js -->
             </div>
           </div>
 
-          <div class="history-filter-bar">
-            <div class="filter-group">
-              <label for="from-date">From</label>
-              <input type="date" id="from-date" class="search-input">
+          <aside class="pos-cart">
+            <div class="cart-header">
+              <div class="pos-section-header">
+                <h2>Current Order</h2>
+                <p>Review items before checkout</p>
+              </div>
+              <div class="cart-header-actions">
+                <button type="button" class="cart-inline-btn tax-btn is-active" id="cart-tax-toggle" style="display:none">Tax</button>
+                <button type="button" class="cart-inline-btn clear-btn" id="clear-cart-button" style="display:none">Clear</button>
+              </div>
             </div>
 
-            <div class="filter-group">
-              <label for="to-date">To</label>
-              <input type="date" id="to-date" class="search-input">
+            <div class="cart-items" id="cart-items">
+              <p class="cart-empty-message">No items added yet.</p>
             </div>
 
-            <div class="filter-group receipt-search">
-              <label for="receipt-search">Receipt #</label>
+            <div class="cart-summary">
+              <div class="cart-summary-row" id="cart-subtotal-row">
+                <span>Subtotal</span>
+                <strong id="cart-subtotal">₱0.00</strong>
+              </div>
+
+              <div class="cart-summary-row" id="cart-tax-row">
+                <span>Tax</span>
+                <strong id="cart-tax">₱0.00</strong>
+              </div>
+
+              <div class="cart-summary-row grand-total">
+                <span>Grand Total</span>
+                <strong id="cart-total">₱0.00</strong>
+              </div>
+            </div>
+
+            <div class="payment-section">
+              <label for="payment-amount">Payment Amount</label>
               <input
-                type="text"
-                id="receipt-search"
-                class="search-input"
-                placeholder="Search receipt number"
-                autocomplete="off"
-              >
+                type="number"
+                id="payment-amount"
+                class="payment-input"
+                placeholder="Enter payment amount"
+                min="0"
+              />
+
+              <div class="change-checkout-row">
+                <div class="change-display">
+                  <span>Change</span>
+                  <strong id="change-amount">₱0.00</strong>
+                </div>
+
+                <button type="button" class="submit-button checkout-button" id="complete-sale-button">
+                  Checkout
+                </button>
+              </div>
+
+              <p id="payment-warning" class="form-error"></p>
+
+              <p id="sale-message" class="sale-message"></p>
             </div>
-
-            <button type="button" class="secondary-button reset-filter-button" id="reset-filters-button">
-              Reset Filters
-            </button>
-          </div>
-
-          <p class="history-summary" id="history-summary">
-            Showing 0 transactions | Total: ₱0.00
-          </p>
-
-          <div class="table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Receipt #</th>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Items</th>
-                  <th>Total</th>
-                  <th>Cashier</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="sales-table-body">
-                <!-- Sales rows will be rendered by history.js -->
-              </tbody>
-            </table>
-          </div>
-
-          <div class="empty-state" id="sales-empty-state">
-            <div class="empty-state-icon">🧾</div>
-            <h3>No sales recorded yet.</h3>
-            <p>Start selling to see transactions here.</p>
-          </div>
+          </aside>
 
         </section>
 
@@ -202,12 +229,6 @@
 
   <div class="modal-overlay" id="receipt-modal">
     <div class="receipt-modal-card">
-
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-        <button type="button" class="modal-close-button" id="close-receipt-button">
-          ×
-        </button>
-      </div>
 
       <div class="receipt" id="receipt">
         <div class="receipt-header">
@@ -276,6 +297,10 @@
         <button type="button" class="submit-button" id="print-receipt-button">
           Print Receipt
         </button>
+
+        <button type="button" class="secondary-button" id="new-sale-button">
+          New Sale
+        </button>
       </div>
 
     </div>
@@ -287,7 +312,7 @@
   <script src="../js/core/data.js"></script>
   <script src="../js/components/notifications.js"></script>
   <script src="../js/components/receipt.js"></script>
-  <script src="../js/pages/history.js"></script>
+  <script src="../js/pages/order.js"></script>
   <script>lucide.createIcons();</script>
 </body>
 </html>
