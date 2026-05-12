@@ -1,6 +1,20 @@
-// JWT verification will be implemented in Module 2.2
+const jwt = require('jsonwebtoken');
+
 const authMiddleware = (req, res, next) => {
-  next();
+  const header = req.headers['authorization'];
+
+  if (!header || !header.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'No token provided' });
+  }
+
+  const token = header.split(' ')[1];
+
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch (err) {
+    res.status(401).json({ success: false, message: 'Invalid or expired token' });
+  }
 };
 
 module.exports = authMiddleware;

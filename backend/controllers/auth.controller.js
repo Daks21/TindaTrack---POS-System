@@ -1,9 +1,73 @@
-const login = (req, res) => {
-  res.status(200).json({ message: 'login — not yet implemented' });
+const bcrypt  = require('bcrypt');
+const jwt     = require('jsonwebtoken');
+const { findByEmail, createUser } = require('../models/user.model');
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const register = async (req, res) => {
+  try {
+    const { fullName, email, password } = req.body;
+
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, message: 'Enter a valid email address' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+    }
+
+    if (findByEmail(email)) {
+      return res.status(409).json({ success: false, message: 'Email is already registered' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = createUser({ fullName, email, password: hashedPassword });
+
+    return res.status(201).json({ success: true, message: 'Account created successfully' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
 };
 
-const register = (req, res) => {
-  res.status(201).json({ message: 'register — not yet implemented' });
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    const user = findByEmail(email);
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, fullName: user.fullName, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return res.status(200).json({
+      success: true,
+      token,
+      user: { id: user.id, fullName: user.fullName, email: user.email, role: user.role }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
 };
 
-module.exports = { login, register };
+module.exports = { register, login };

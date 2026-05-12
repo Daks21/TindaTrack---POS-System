@@ -2,6 +2,7 @@ const express        = require('express');
 const dotenv         = require('dotenv');
 const cors           = require('cors');
 const productsRouter = require('./routes/products.routes');
+const authRouter     = require('./routes/auth.routes');
 
 dotenv.config();
 const app = express();
@@ -13,6 +14,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Celso POS API is running' });
 });
 
+app.use('/api/auth',     authRouter);
 app.use('/api/products', productsRouter);
 
 const PORT = process.env.PORT || 3000;
