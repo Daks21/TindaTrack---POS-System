@@ -6,8 +6,6 @@ const salesTableBody = document.getElementById("sales-table-body");
 const salesEmptyState = document.getElementById("sales-empty-state");
 const historySummary = document.getElementById("history-summary");
 
-const savedSales = localStorage.getItem("sales");
-
 const fromDateInput = document.getElementById("from-date");
 const toDateInput = document.getElementById("to-date");
 const receiptSearchInput = document.getElementById("receipt-search");
@@ -15,29 +13,29 @@ const resetFiltersButton = document.getElementById("reset-filters-button");
 
 let sales = [];
 
-if (savedSales !== null) {
-  sales = JSON.parse(savedSales);
-}
+fromDateInput.addEventListener("change", function () { filterSales(); });
+toDateInput.addEventListener("change", function () { filterSales(); });
+receiptSearchInput.addEventListener("keyup", function () { filterSales(); });
 
-
-fromDateInput.addEventListener("change", function () {
-  filterSales();
-});
-
-toDateInput.addEventListener("change", function () {
-  filterSales();
-});
-
-receiptSearchInput.addEventListener("keyup", function () {
-  filterSales();
-});
-
-resetFiltersButton.addEventListener("click", function () {
+resetFiltersButton.addEventListener("click", async function () {
   fromDateInput.value = "";
   toDateInput.value = "";
   receiptSearchInput.value = "";
 
-  renderSales(sales);
+  showLoading('#sales-table-body');
+  try {
+    const result = await getSales();
+    if (result && result.success) {
+      sales = result.data || [];
+      renderSales(sales);
+    } else {
+      showApiError(result ? result.message : 'Failed to load sales.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  } finally {
+    hideLoading('#sales-table-body');
+  }
 });
 
 function formatReceiptNumber(saleId) {
@@ -89,62 +87,72 @@ function renderSales(salesArray) {
   historySummary.textContent = `Showing ${salesArray.length} transaction(s) | Total: ${formatPeso(totalSalesAmount)}`;
 }
 
-function filterSales() {
-  let filteredSales = [...sales];
-
+async function filterSales() {
   const fromDate = fromDateInput.value;
   const toDate = toDateInput.value;
   const receiptSearch = receiptSearchInput.value.trim().toLowerCase();
 
-  if (fromDate !== "") {
-    filteredSales = filteredSales.filter(function (sale) {
-      return new Date(sale.timestamp) >= new Date(fromDate);
-    });
+  const params = {};
+  if (fromDate) params.from = fromDate;
+  if (toDate) params.to = toDate;
+
+  showLoading('#sales-table-body');
+  try {
+    const result = await getSales(params);
+    if (result && result.success) {
+      let filtered = result.data || [];
+      if (receiptSearch !== '') {
+        filtered = filtered.filter(function (sale) {
+          return formatReceiptNumber(sale.id).toLowerCase().includes(receiptSearch);
+        });
+      }
+      renderSales(filtered);
+    } else {
+      showApiError(result ? result.message : 'Failed to load sales.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  } finally {
+    hideLoading('#sales-table-body');
   }
-
-  if (toDate !== "") {
-    filteredSales = filteredSales.filter(function (sale) {
-      const saleDate = new Date(sale.timestamp);
-      const endDate = new Date(toDate);
-
-      endDate.setHours(23, 59, 59, 999);
-
-      return saleDate <= endDate;
-    });
-  }
-
-  if (receiptSearch !== "") {
-    filteredSales = filteredSales.filter(function (sale) {
-      const receiptNumber = formatReceiptNumber(sale.id).toLowerCase();
-
-      return receiptNumber.includes(receiptSearch);
-    });
-  }
-
-  renderSales(filteredSales);
 }
 
 function attachViewSaleEvents() {
-  const viewButtons = document.querySelectorAll(".view-sale-button");
-
-  viewButtons.forEach(function (button) {
+  document.querySelectorAll(".view-sale-button").forEach(function (button) {
     button.addEventListener("click", function () {
-      const saleId = Number(button.dataset.id);
-      openSaleDetailModal(saleId);
+      openSaleDetailModal(button.dataset.id);
     });
   });
 }
 
-function openSaleDetailModal(saleId) {
-  const sale = sales.find(function (sale) {
-    return sale.id === saleId;
-  });
-
-  if (!sale) {
-    return;
+async function openSaleDetailModal(saleId) {
+  try {
+    const result = await getSale(saleId);
+    if (result && result.success) {
+      showReceipt(result.data);
+    } else {
+      showApiError(result ? result.message : 'Failed to load sale details.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
   }
-
-  showReceipt(sale);
 }
 
-renderSales(sales);
+async function init() {
+  showLoading('#sales-table-body');
+  try {
+    const result = await getSales();
+    if (result && result.success) {
+      sales = result.data || [];
+      renderSales(sales);
+    } else {
+      showApiError(result ? result.message : 'Failed to load sales history.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  } finally {
+    hideLoading('#sales-table-body');
+  }
+}
+
+init();

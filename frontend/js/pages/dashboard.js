@@ -111,7 +111,6 @@ var WIDGET_META = {
   'sales-by-day':         { label: 'Sales by Day of Week',     span: true,  heatmap: false }
 };
 
-// Dashboard cell constants (compact — smaller than analytics 13px)
 var DASH_CELL = 10, DASH_GAP = 2;
 var DASH_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -123,7 +122,6 @@ function renderDashboardWidgets() {
   var pinned = [];
   try { pinned = JSON.parse(localStorage.getItem('dashboardWidgets') || '[]'); } catch (e) { pinned = []; }
 
-  // Clear existing charts
   Object.keys(_dashCharts).forEach(function (id) { _destroyDashChart(id); });
   container.innerHTML = '';
 
@@ -148,7 +146,6 @@ function renderDashboardWidgets() {
     card.className = 'dashboard-chart-card' + (meta.span ? ' span-2' : '');
 
     if (meta.heatmap) {
-      // ── Heatmap widget — mirrors Analytics Sales Activity ──
       card.innerHTML =
         '<p class="dashboard-chart-title">' + meta.label + '</p>' +
         '<div class="dash-hm-outer">' +
@@ -236,7 +233,6 @@ function renderDashboardWidgets() {
           weeks.push(week);
         }
 
-        // Month labels
         if (monthsEl) {
           monthsEl.innerHTML = '';
           monthLabels.forEach(function (ml, i) {
@@ -251,7 +247,6 @@ function renderDashboardWidgets() {
           });
         }
 
-        // Cells
         cellsEl.innerHTML = '';
         weeks.forEach(function (week) {
           var weekEl = document.createElement('div');
@@ -274,7 +269,6 @@ function renderDashboardWidgets() {
           cellsEl.appendChild(weekEl);
         });
 
-        // Tooltip — same mechanism as analytics page
         if (tooltip) {
           cellsEl.addEventListener('mousemove', function (e) {
             var cell = e.target.closest('.dash-heatmap-cell');
@@ -302,13 +296,11 @@ function renderDashboardWidgets() {
           });
         }
 
-        // Scroll to the latest (rightmost) week
         var scrollArea = cellsEl.closest('.dash-hm-scroll-area');
         if (scrollArea) scrollArea.scrollLeft = scrollArea.scrollWidth;
       }, 0);
 
     } else {
-      // ── Chart.js widget ──
       var canvasId = 'dash-chart-' + widgetId;
       var emptyId  = 'dash-empty-' + widgetId;
       card.innerHTML =
@@ -405,8 +397,9 @@ var _themeObserverDash = new MutationObserver(function () {
 });
 _themeObserverDash.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+// ── DOM references ──
 
+const currentUser         = JSON.parse(localStorage.getItem("currentUser"));
 const totalSalesTodayEl   = document.getElementById("total-sales-today");
 const totalProductsEl     = document.getElementById("total-products");
 const lowStockItemsEl     = document.getElementById("low-stock-items");
@@ -418,98 +411,104 @@ if (currentUser && userName) {
   userName.textContent = currentUser.fullName;
 }
 
-// ── Load products and compute summary ──
-var products = JSON.parse(localStorage.getItem('products') || '[]');
-var thr = getLowStockThreshold();
-var lowCount  = products.filter(function (p) { return p.stock > 0 && p.stock <= thr; }).length;
-var outCount  = products.filter(function (p) { return p.stock === 0; }).length;
-var alertCount = lowCount + outCount;
+// ── Init ──
 
-// ── Today's sales summary ──
-var allSalesData    = JSON.parse(localStorage.getItem('sales') || '[]');
-var todayStr        = new Date().toISOString().slice(0, 10);
-var todaysSales     = allSalesData.filter(function (s) {
-  return new Date(s.timestamp).toISOString().slice(0, 10) === todayStr;
-});
-var todayRevenue    = todaysSales.reduce(function (sum, s) { return sum + s.total; }, 0);
-var todayFormatted  = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(todayRevenue);
+async function initDashboard() {
+  // Summary cards + stock alerts
+  let summary = {};
+  try {
+    const summaryResult = await getAnalyticsSummary();
+    if (summaryResult && summaryResult.success) {
+      summary = summaryResult.data;
+    } else {
+      showApiError(summaryResult ? summaryResult.message : 'Failed to load dashboard summary.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  }
 
-if (totalProductsEl)     totalProductsEl.textContent     = products.length;
-if (lowStockItemsEl)     lowStockItemsEl.textContent      = alertCount;
-if (totalSalesTodayEl)   totalSalesTodayEl.textContent    = todayFormatted;
-if (transactionsTodayEl) transactionsTodayEl.textContent  = todaysSales.length;
+  if (totalProductsEl)     totalProductsEl.textContent     = summary.totalProducts    || 0;
+  if (lowStockItemsEl)     lowStockItemsEl.textContent     = summary.lowStockCount    || 0;
+  if (totalSalesTodayEl)   totalSalesTodayEl.textContent   = _formatPeso(summary.todayRevenue    || 0);
+  if (transactionsTodayEl) transactionsTodayEl.textContent = summary.todayTransactions || 0;
 
-// ── Render Low Stock Alerts ──
-if (stockAlertList) {
-  var alertProducts = products
-    .filter(function (p) { return p.stock <= thr; })
-    .sort(function (a, b) { return a.stock - b.stock; });
+  // Stock alert list
+  if (stockAlertList) {
+    var alertProducts = summary.lowStockItems || [];
 
-  if (alertProducts.length === 0) {
-    stockAlertList.innerHTML =
-      '<p style="text-align:center;padding:24px;color:var(--color-text-muted);font-size:14px;">No stock alerts. All products are well stocked.</p>';
-  } else {
-    var html = '';
-    alertProducts.forEach(function (p) {
-      var isOut   = p.stock === 0;
-      var dotCls  = isOut ? 'status-critical' : 'status-low';
-      var lblCls  = isOut ? 'critical-label'  : 'low-label';
-      var lblText = isOut ? 'Out of Stock'     : 'Low Stock';
-      var stock   = p.stock + ' ' + (p.unit || 'pc') + (p.stock !== 1 ? 's' : '');
+    if (alertProducts.length === 0) {
+      stockAlertList.innerHTML =
+        '<p style="text-align:center;padding:24px;color:var(--color-text-muted);font-size:14px;">No stock alerts. All products are well stocked.</p>';
+    } else {
+      var html = '';
+      alertProducts.forEach(function (p) {
+        var isOut   = p.stock === 0;
+        var dotCls  = isOut ? 'status-critical' : 'status-low';
+        var lblCls  = isOut ? 'critical-label'  : 'low-label';
+        var lblText = isOut ? 'Out of Stock'     : 'Low Stock';
+        var stock   = p.stock + ' ' + (p.unit || 'pc') + (p.stock !== 1 ? 's' : '');
 
-      html +=
-        '<div class="stock-alert-item">' +
-          '<div class="stock-info">' +
-            '<span class="status-dot ' + dotCls + '"></span>' +
-            '<div>' +
-              '<h3>' + p.name + '</h3>' +
-              '<p>Current stock: ' + stock + '</p>' +
+        html +=
+          '<div class="stock-alert-item">' +
+            '<div class="stock-info">' +
+              '<span class="status-dot ' + dotCls + '"></span>' +
+              '<div>' +
+                '<h3>' + p.name + '</h3>' +
+                '<p>Current stock: ' + stock + '</p>' +
+              '</div>' +
             '</div>' +
-          '</div>' +
-          '<span class="stock-label ' + lblCls + '">' + lblText + '</span>' +
-        '</div>';
-    });
-    stockAlertList.innerHTML = html;
+            '<span class="stock-label ' + lblCls + '">' + lblText + '</span>' +
+          '</div>';
+      });
+      stockAlertList.innerHTML = html;
+    }
   }
-}
 
-// ── Recent Transactions table ──
-var recentTxBody = document.getElementById('recent-transactions-body');
-if (recentTxBody) {
-  var recentSales = allSalesData
-    .slice()
-    .sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); })
-    .slice(0, 10);
+  // Recent transactions
+  var recentTxBody = document.getElementById('recent-transactions-body');
+  if (recentTxBody) {
+    let salesResult;
+    try {
+      salesResult = await getSales();
+    } catch (err) {
+      showApiError('Network error. Is the server running?');
+      salesResult = { data: [] };
+    }
+    const recentSales = (salesResult && salesResult.data ? salesResult.data : [])
+      .sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); })
+      .slice(0, 10);
 
-  if (recentSales.length === 0) {
-    recentTxBody.innerHTML =
-      '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--color-text-muted);">No transactions recorded yet.</td></tr>';
+    if (recentSales.length === 0) {
+      recentTxBody.innerHTML =
+        '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--color-text-muted);">No transactions recorded yet.</td></tr>';
+    } else {
+      var txHtml = '';
+      recentSales.forEach(function (sale) {
+        var d         = new Date(sale.timestamp);
+        var dateStr   = d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+        var timeStr   = d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+        var itemCount = sale.items.reduce(function (s, i) { return s + i.quantity; }, 0);
+        var totalFmt  = _formatPeso(sale.total);
+
+        txHtml +=
+          '<tr>' +
+            '<td>RCPT-' + sale.id + '</td>' +
+            '<td>' + dateStr + ' - ' + timeStr + '</td>' +
+            '<td>' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</td>' +
+            '<td>' + totalFmt + '</td>' +
+            '<td><span class="status-badge status-completed">Completed</span></td>' +
+          '</tr>';
+      });
+      recentTxBody.innerHTML = txHtml;
+    }
+  }
+
+  // Pinned analytics widgets
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderDashboardWidgets);
   } else {
-    var txHtml = '';
-    recentSales.forEach(function (sale) {
-      var d          = new Date(sale.timestamp);
-      var dateStr    = d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
-      var timeStr    = d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
-      var itemCount  = sale.items.reduce(function (s, i) { return s + i.quantity; }, 0);
-      var totalFmt   = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(sale.total);
-
-      txHtml +=
-        '<tr>' +
-          '<td>RCPT-' + sale.id + '</td>' +
-          '<td>' + dateStr + ' - ' + timeStr + '</td>' +
-          '<td>' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</td>' +
-          '<td>' + totalFmt + '</td>' +
-          '<td><span class="status-badge status-completed">Completed</span></td>' +
-        '</tr>';
-    });
-    recentTxBody.innerHTML = txHtml;
+    renderDashboardWidgets();
   }
 }
 
-// ── Render analytics widgets after DOM is ready ──
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', renderDashboardWidgets);
-} else {
-  renderDashboardWidgets();
-}
-
+initDashboard();

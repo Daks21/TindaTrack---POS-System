@@ -63,7 +63,7 @@ function getDateRange(rangeKey) {
 
     case 'last-30': {
       var l30 = new Date(start);
-      l30.setDate(start.getDate() - 29); // today + 29 back = 30 days inclusive
+      l30.setDate(start.getDate() - 29);
       return { from: l30, to: todayEnd() };
     }
 
@@ -75,97 +75,13 @@ function getDateRange(rangeKey) {
   }
 }
 
-function filterSalesByRange(sales, from, to) {
-  if (!from || !to) return sales;
-  return sales.filter(function (s) {
-    var d = new Date(s.timestamp);
-    return d >= from && d <= to;
-  });
-}
-
-// ── KPI computation ──
-
-function computeKPIs(sales) {
-  var totalRevenue = sales.reduce(function (sum, s) { return sum + s.total; }, 0);
-  var totalTransactions = sales.length;
-  var avgOrderValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
-  var totalUnits = sales.reduce(function (sum, s) {
-    return sum + s.items.reduce(function (si, item) { return si + item.quantity; }, 0);
-  }, 0);
-  return {
-    totalRevenue: totalRevenue,
-    totalTransactions: totalTransactions,
-    avgOrderValue: avgOrderValue,
-    totalUnits: totalUnits
-  };
-}
+// ── KPI display ──
 
 function updateKPIs(kpis) {
-  document.getElementById('kpi-revenue').textContent      = formatPeso(kpis.totalRevenue);
-  document.getElementById('kpi-transactions').textContent = kpis.totalTransactions;
-  document.getElementById('kpi-avg-order').textContent    = formatPeso(kpis.avgOrderValue);
-  document.getElementById('kpi-units').textContent        = kpis.totalUnits;
-}
-
-// ── Chart data helpers ──
-
-function getRevenueByDay(sales, from, to) {
-  var dayMap = {};
-
-  if (from && to) {
-    var cur = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-    var end = new Date(to.getFullYear(), to.getMonth(), to.getDate());
-    while (cur <= end) {
-      dayMap[cur.toISOString().slice(0, 10)] = 0;
-      cur.setDate(cur.getDate() + 1);
-    }
-  }
-
-  sales.forEach(function (s) {
-    var key = new Date(s.timestamp).toISOString().slice(0, 10);
-    dayMap[key] = (dayMap[key] || 0) + s.total;
-  });
-
-  var keys = Object.keys(dayMap).sort();
-  return {
-    labels: keys.map(function (k) {
-      return new Date(k + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-    }),
-    data: keys.map(function (k) { return dayMap[k]; })
-  };
-}
-
-function getTopProductsByRevenue(sales, n) {
-  n = n || 5;
-  var map = {};
-  sales.forEach(function (s) {
-    s.items.forEach(function (item) {
-      map[item.name] = (map[item.name] || 0) + item.lineTotal;
-    });
-  });
-  var sorted = Object.entries(map).sort(function (a, b) { return b[1] - a[1]; }).slice(0, n);
-  return { labels: sorted.map(function (e) { return e[0]; }), data: sorted.map(function (e) { return e[1]; }) };
-}
-
-function getTopProductsByQty(sales, n) {
-  n = n || 5;
-  var map = {};
-  sales.forEach(function (s) {
-    s.items.forEach(function (item) {
-      map[item.name] = (map[item.name] || 0) + item.quantity;
-    });
-  });
-  var sorted = Object.entries(map).sort(function (a, b) { return b[1] - a[1]; }).slice(0, n);
-  return { labels: sorted.map(function (e) { return e[0]; }), data: sorted.map(function (e) { return e[1]; }) };
-}
-
-function getSalesByDayOfWeek(sales) {
-  var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  var totals = [0, 0, 0, 0, 0, 0, 0];
-  sales.forEach(function (s) {
-    totals[new Date(s.timestamp).getDay()] += s.total;
-  });
-  return { labels: days, data: totals };
+  document.getElementById('kpi-revenue').textContent      = formatPeso(kpis.totalRevenue || 0);
+  document.getElementById('kpi-transactions').textContent = kpis.totalTransactions || 0;
+  document.getElementById('kpi-avg-order').textContent    = formatPeso(kpis.avgOrderValue || 0);
+  document.getElementById('kpi-units').textContent        = kpis.totalUnits || 0;
 }
 
 // ── Chart rendering ──
@@ -244,9 +160,9 @@ function barColors(count) {
   });
 }
 
-function renderRevenueChart(sales, from, to) {
+function renderRevenueChart(d) {
   destroyChart('revenue');
-  var d = getRevenueByDay(sales, from, to);
+  if (!d || !d.data) { showChartOrEmpty('chart-revenue', 'empty-revenue', false); return; }
   var hasData = d.data.some(function (v) { return v > 0; });
   showChartOrEmpty('chart-revenue', 'empty-revenue', hasData);
   if (!hasData) return;
@@ -278,14 +194,13 @@ function renderRevenueChart(sales, from, to) {
   );
 }
 
-function renderTopRevenueChart(sales) {
+function renderTopRevenueChart(d) {
   destroyChart('top-revenue');
-  var d = getTopProductsByRevenue(sales);
+  if (!d || !d.data) { showChartOrEmpty('chart-top-revenue', 'empty-top-revenue', false); return; }
   var hasData = d.data.length > 0;
   showChartOrEmpty('chart-top-revenue', 'empty-top-revenue', hasData);
   if (!hasData) return;
 
-  var c = chartColors();
   var opts = baseOptions();
   opts.indexAxis = 'y';
   opts.plugins.tooltip.callbacks.label = function (ctx) { return ' ' + formatPeso(ctx.parsed.x); };
@@ -303,9 +218,9 @@ function renderTopRevenueChart(sales) {
   );
 }
 
-function renderTopQtyChart(sales) {
+function renderTopQtyChart(d) {
   destroyChart('top-qty');
-  var d = getTopProductsByQty(sales);
+  if (!d || !d.data) { showChartOrEmpty('chart-top-qty', 'empty-top-qty', false); return; }
   var hasData = d.data.length > 0;
   showChartOrEmpty('chart-top-qty', 'empty-top-qty', hasData);
   if (!hasData) return;
@@ -327,9 +242,9 @@ function renderTopQtyChart(sales) {
   );
 }
 
-function renderDayOfWeekChart(sales) {
+function renderDayOfWeekChart(d) {
   destroyChart('by-day');
-  var d = getSalesByDayOfWeek(sales);
+  if (!d || !d.data) { showChartOrEmpty('chart-by-day', 'empty-by-day', false); return; }
   var hasData = d.data.some(function (v) { return v > 0; });
   showChartOrEmpty('chart-by-day', 'empty-by-day', hasData);
   if (!hasData) return;
@@ -363,29 +278,20 @@ var HEATMAP_CELL   = 13;
 var HEATMAP_GAP    = 3;
 var HEATMAP_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-// Named handlers so we can cleanly remove them before re-adding
 var _heatmapMouseMove  = null;
 var _heatmapMouseLeave = null;
 
-function renderHeatmap() {
+function renderHeatmap(dayRevenue) {
   var cellsEl  = document.getElementById('heatmap-cells');
   var monthsEl = document.getElementById('heatmap-months');
   var tooltip  = document.getElementById('heatmap-tooltip');
   if (!cellsEl) return;
 
-  // Remove stale listeners before re-rendering
   if (_heatmapMouseMove)  cellsEl.removeEventListener('mousemove',  _heatmapMouseMove);
   if (_heatmapMouseLeave) cellsEl.removeEventListener('mouseleave', _heatmapMouseLeave);
 
-  // Build daily revenue map (always full history — heatmap is independent of date picker)
-  var allSales = JSON.parse(localStorage.getItem('sales') || '[]');
-  var dayRevenue = {};
-  allSales.forEach(function (s) {
-    var key = new Date(s.timestamp).toISOString().slice(0, 10);
-    dayRevenue[key] = (dayRevenue[key] || 0) + s.total;
-  });
+  dayRevenue = dayRevenue || {};
 
-  // Quartile thresholds for 5-level color scale
   var nonZero = Object.values(dayRevenue)
     .filter(function (v) { return v > 0; })
     .sort(function (a, b) { return a - b; });
@@ -401,7 +307,6 @@ function renderHeatmap() {
     return 4;
   }
 
-  // 52 weeks back, aligned to Sunday
   var today     = new Date();
   var todayEnd  = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
   var startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -433,7 +338,6 @@ function renderHeatmap() {
     weeks.push(week);
   }
 
-  // ── Month labels ──
   if (monthsEl) {
     monthsEl.innerHTML = '';
     monthLabels.forEach(function (ml, i) {
@@ -448,7 +352,6 @@ function renderHeatmap() {
     });
   }
 
-  // ── Cells ──
   cellsEl.innerHTML = '';
   weeks.forEach(function (week) {
     var weekEl = document.createElement('div');
@@ -460,7 +363,6 @@ function renderHeatmap() {
       if (day.date && day.level !== -1) {
         cell.dataset.date    = day.key;
         cell.dataset.revenue = day.revenue;
-        // Accessible label
         var d2      = new Date(day.key + 'T00:00:00');
         var dStr    = d2.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
         var revStr  = day.revenue > 0 ? formatPeso(day.revenue) + ' in sales' : 'No sales';
@@ -473,28 +375,23 @@ function renderHeatmap() {
     cellsEl.appendChild(weekEl);
   });
 
-  // ── Tooltip (named handlers to prevent duplicate listeners) ──
   if (tooltip) {
     _heatmapMouseMove = function (e) {
       var cell = e.target.closest('.heatmap-cell');
-      if (!cell || !cell.dataset.date) {
-        tooltip.style.display = 'none';
-        return;
-      }
-      var d2     = new Date(cell.dataset.date + 'T00:00:00');
+      if (!cell || !cell.dataset.date) { tooltip.style.display = 'none'; return; }
+      var d2      = new Date(cell.dataset.date + 'T00:00:00');
       var dateStr = d2.toLocaleDateString('en-PH', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-      var rev    = parseFloat(cell.dataset.revenue) || 0;
+      var rev     = parseFloat(cell.dataset.revenue) || 0;
 
       tooltip.querySelector('.heatmap-tooltip-date').textContent  = dateStr;
       tooltip.querySelector('.heatmap-tooltip-value').textContent =
         rev > 0 ? formatPeso(rev) + ' in sales' : 'No sales';
       tooltip.style.display = 'block';
 
-      // Bounds-safe positioning
-      var tw  = tooltip.offsetWidth  || 170;
-      var th  = tooltip.offsetHeight || 50;
-      var tx  = e.clientX + 14;
-      var ty  = e.clientY - th - 10;
+      var tw = tooltip.offsetWidth  || 170;
+      var th = tooltip.offsetHeight || 50;
+      var tx = e.clientX + 14;
+      var ty = e.clientY - th - 10;
 
       if (tx + tw > window.innerWidth)  tx = e.clientX - tw - 10;
       if (tx < 8)                       tx = 8;
@@ -505,32 +402,56 @@ function renderHeatmap() {
       tooltip.style.top  = ty + 'px';
     };
 
-    _heatmapMouseLeave = function () {
-      tooltip.style.display = 'none';
-    };
+    _heatmapMouseLeave = function () { tooltip.style.display = 'none'; };
 
     cellsEl.addEventListener('mousemove',  _heatmapMouseMove);
     cellsEl.addEventListener('mouseleave', _heatmapMouseLeave);
   }
 
-  // Scroll to the latest (rightmost) week
   var scrollArea = cellsEl.closest('.heatmap-scroll-area');
   if (scrollArea) scrollArea.scrollLeft = scrollArea.scrollWidth;
 }
 
 // ── Main render ──
 
-function renderAll() {
-  var range    = getDateRange(currentRange);
-  var allSales = JSON.parse(localStorage.getItem('sales') || '[]');
-  var sales    = filterSalesByRange(allSales, range.from, range.to);
+async function renderAll() {
+  var range   = getDateRange(currentRange);
+  var fromStr = range.from ? range.from.toISOString() : null;
+  var toStr   = range.to   ? range.to.toISOString()   : null;
 
-  updateKPIs(computeKPIs(sales));
-  renderHeatmap();
-  renderRevenueChart(sales, range.from, range.to);
-  renderTopRevenueChart(sales);
-  renderTopQtyChart(sales);
-  renderDayOfWeekChart(sales);
+  try {
+    var results = await Promise.all([
+      getKPIs(fromStr, toStr),
+      getCharts(fromStr, toStr),
+      getHeatmap()
+    ]);
+
+    var kpiResult     = results[0];
+    var chartResult   = results[1];
+    var heatmapResult = results[2];
+
+    if (kpiResult && kpiResult.success) {
+      updateKPIs(kpiResult.data);
+    } else if (kpiResult && !kpiResult.success) {
+      showApiError(kpiResult.message || 'Failed to load KPIs.');
+    }
+
+    if (heatmapResult && heatmapResult.success) {
+      renderHeatmap(heatmapResult.data);
+    }
+
+    if (chartResult && chartResult.success) {
+      var cd = chartResult.data;
+      renderRevenueChart(cd.revenueByDay);
+      renderTopRevenueChart(cd.topByRevenue);
+      renderTopQtyChart(cd.topByQty);
+      renderDayOfWeekChart(cd.byDayOfWeek);
+    } else if (chartResult && !chartResult.success) {
+      showApiError(chartResult.message || 'Failed to load chart data.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  }
 
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
@@ -556,9 +477,9 @@ function attachDatePresetEvents() {
   var applyBtn = document.getElementById('apply-custom-range');
   if (applyBtn) {
     applyBtn.addEventListener('click', function () {
-      var fromVal  = document.getElementById('analytics-from').value;
-      var toVal    = document.getElementById('analytics-to').value;
-      var errorEl  = document.getElementById('custom-date-error');
+      var fromVal = document.getElementById('analytics-from').value;
+      var toVal   = document.getElementById('analytics-to').value;
+      var errorEl = document.getElementById('custom-date-error');
 
       if (!fromVal || !toVal) {
         if (errorEl) errorEl.textContent = 'Please select both a start and end date.';
@@ -574,7 +495,6 @@ function attachDatePresetEvents() {
       customTo     = new Date(toVal   + 'T23:59:59');
       currentRange = 'custom';
 
-      // Mark custom button active
       document.querySelectorAll('.date-preset-btn').forEach(function (b) {
         b.classList.toggle('is-active', b.dataset.range === 'custom');
       });
@@ -584,7 +504,7 @@ function attachDatePresetEvents() {
   }
 }
 
-// ── Window resize: keep charts fluid ──
+// ── Window resize ──
 
 var _resizeTimer;
 window.addEventListener('resize', function () {
@@ -596,7 +516,7 @@ window.addEventListener('resize', function () {
   }, 200);
 });
 
-// ── Theme change: debounced re-render ──
+// ── Theme change ──
 
 var _themeTimer;
 var themeObserver = new MutationObserver(function () {

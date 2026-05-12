@@ -12,11 +12,8 @@ const passwordError = document.getElementById("password-error");
 const loginError = document.getElementById("login-error");
 const confirmPasswordError = document.getElementById("confirmPassword-error");
 
-const validEmail = "admin@celsopos.com";
-const validPassword = "admin123";
-
 if (loginForm) {
-  loginForm.addEventListener("submit", function (event) {
+  loginForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const email = emailInput.value.trim();
@@ -36,46 +33,22 @@ if (loginForm) {
       hasError = true;
     }
 
-    if (hasError) {
-      return;
-    }
+    if (hasError) return;
 
-    const users = getUsers();
+    const result = await login(email, password);
 
-    const registeredUser = users.find(function (user) {
-      return user.email === email && user.password === password;
-    });
-    
-    const isDefaultAdmin = email === validEmail && password === validPassword;
-
-    if (registeredUser) {
-      localStorage.setItem(
-        "currentUser",
-        JSON.stringify({
-          fullName: registeredUser.fullName,
-          email: registeredUser.email
-        })
-      );
+    if (result && result.success) {
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('currentUser', JSON.stringify(result.user));
       window.location.href = "pages/dashboard.html";
-    
-    }else if (isDefaultAdmin) {
-      localStorage.setItem(
-        "currentUser",
-        JSON.stringify({
-          fullName: "Admin User",
-          email: validEmail
-        })
-      );
-      window.location.href = "pages/dashboard.html";
-    
     } else {
-      loginError.textContent = "Incorrect email or password. Please try again";
+      loginError.textContent = result ? result.message : "Login failed. Please try again.";
     }
   });
 }
 
 if (registerForm) {
-  registerForm.addEventListener("submit", function (event) {
+  registerForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const fullName = fullNameInput.value.trim();
@@ -88,8 +61,8 @@ if (registerForm) {
     let hasError = false;
 
     if (fullName === "") {
-    showFieldError(fullNameInput, fullNameError, "Full name is required");
-    hasError = true;
+      showFieldError(fullNameInput, fullNameError, "Full name is required");
+      hasError = true;
     }
 
     if (email === "") {
@@ -103,13 +76,11 @@ if (registerForm) {
     }
 
     if (confirmPassword === "") {
-    showFieldError(confirmPasswordInput, confirmPasswordError, "Password confirmation is required");
-    hasError = true;
+      showFieldError(confirmPasswordInput, confirmPasswordError, "Password confirmation is required");
+      hasError = true;
     }
 
-    if (hasError) {
-      return;
-    }
+    if (hasError) return;
 
     if (!isValidEmail(email)) {
       showFieldError(emailInput, emailError, "Enter a valid email address");
@@ -122,43 +93,18 @@ if (registerForm) {
     }
 
     if (confirmPassword !== password) {
-    showFieldError(confirmPasswordInput, confirmPasswordError, "Passwords do not match");
-    return;
-    }
-
-    const users = getUsers();
-
-    const emailExists = users.some(function (user) {
-      return user.email === email;
-    });
-
-    if (emailExists) {
-      showFieldError(emailInput, emailError, "This email is already registered");
+      showFieldError(confirmPasswordInput, confirmPasswordError, "Passwords do not match");
       return;
     }
 
-    const newUser = {
-      fullName: fullName,
-      email: email,
-      password: password
-    };
+    const result = await register(fullName, email, password);
 
-    users.push(newUser);
-
-    localStorage.setItem("users", JSON.stringify(users));
-
-    window.location.href = "../../index.html"
+    if (result && result.success) {
+      window.location.href = "../../index.html";
+    } else {
+      showFieldError(emailInput, emailError, result ? result.message : "Registration failed. Please try again.");
+    }
   });
-}
-
-function getUsers() {
-  const users = localStorage.getItem("users");
-
-  if (users === null) {
-    return [];
-  }
-
-  return JSON.parse(users);
 }
 
 function isValidEmail(email) {
@@ -195,9 +141,8 @@ function clearRegisterErrors() {
 }
 
 function checkAuth() {
-  const currentUser = localStorage.getItem("currentUser");
-
-  if (currentUser === null) {
+  const token = localStorage.getItem("token");
+  if (token === null) {
     window.location.href = "../index.html";
   }
 }

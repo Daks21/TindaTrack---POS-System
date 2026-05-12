@@ -3,10 +3,10 @@ checkAuth();
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 const userName    = document.getElementById('user-name');
 
-const inventoryTableBody    = document.getElementById('inventory-table-body');
-const inventorySearch       = document.getElementById('inventory-search');
-const inventorySummary      = document.getElementById('inventory-summary');
-const restockColHeader      = document.getElementById('restock-col-header');
+const inventoryTableBody      = document.getElementById('inventory-table-body');
+const inventorySearch         = document.getElementById('inventory-search');
+const inventorySummary        = document.getElementById('inventory-summary');
+const restockColHeader        = document.getElementById('restock-col-header');
 const inventoryCategorySelect = document.getElementById('inventory-category-select');
 const inventoryStatusSelect   = document.getElementById('inventory-status-select');
 
@@ -17,42 +17,39 @@ const restockQuantityInput = document.getElementById('restock-quantity');
 const restockProductInfo   = document.getElementById('restock-product-info');
 const restockError         = document.getElementById('restock-error');
 
-let products        = [];
-let activeStatus    = 'all';
-let activeCategory  = 'All';
-let restockingId    = null;
+let products       = [];
+let activeStatus   = 'all';
+let activeCategory = 'All';
+let restockingId   = null;
 
-// ── Admin check ──
 function isAdmin() {
-  return currentUser && currentUser.email === 'admin@celsopos.com';
+  return currentUser && (currentUser.role === 'admin' || currentUser.email === 'admin@celsopos.com');
 }
 
-// ── Load products ──
-function loadProducts() {
-  const saved = localStorage.getItem('products');
-  products = saved ? JSON.parse(saved) : [];
-}
-
-// ── Save products ──
-function saveProducts() {
-  localStorage.setItem('products', JSON.stringify(products));
-}
-
-// ── Stock status helper ──
 function getStockStatus(stock) {
   var threshold = getLowStockThreshold();
-  if (stock === 0)            return { label: 'Out of Stock', cls: 'stock-out', dotCls: 'stock-dot--out', key: 'out' };
-  if (stock <= threshold)     return { label: 'Low Stock',    cls: 'stock-low', dotCls: 'stock-dot--low', key: 'low' };
-  return                             { label: 'In Stock',     cls: 'stock-ok',  dotCls: 'stock-dot--ok',  key: 'ok'  };
+  if (stock === 0)        return { label: 'Out of Stock', cls: 'stock-out', dotCls: 'stock-dot--out', key: 'out' };
+  if (stock <= threshold) return { label: 'Low Stock',    cls: 'stock-low', dotCls: 'stock-dot--low', key: 'low' };
+  return                         { label: 'In Stock',     cls: 'stock-ok',  dotCls: 'stock-dot--ok',  key: 'ok'  };
 }
 
-// ── Render summary cards ──
-function renderSummary() {
-  const total = products.length;
-  const totalItems = products.reduce(function (sum, p) { return sum + (p.stock || 0); }, 0);
-  var thr = getLowStockThreshold();
-  const low   = products.filter(function (p) { return p.stock > 0 && p.stock <= thr; }).length;
-  const out   = products.filter(function (p) { return p.stock === 0; }).length;
+async function renderSummary() {
+  let data = {};
+  try {
+    const result = await getInventorySummary();
+    if (result && result.success) {
+      data = result.data;
+    } else {
+      showApiError(result ? result.message : 'Failed to load inventory summary.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  }
+
+  const total      = data.totalProducts  || 0;
+  const totalItems = data.totalItems     || 0;
+  const low        = data.lowStockCount  || 0;
+  const out        = data.outOfStockCount || 0;
 
   inventorySummary.innerHTML =
     '<div class="inventory-stat">' +
@@ -73,7 +70,6 @@ function renderSummary() {
     '</div>';
 }
 
-// ── Render category select options ──
 function renderCategorySelect() {
   if (!inventoryCategorySelect) return;
 
@@ -91,7 +87,6 @@ function renderCategorySelect() {
   });
 }
 
-// ── Render inventory table ──
 function renderInventory(list) {
   inventoryTableBody.innerHTML = '';
 
@@ -129,21 +124,19 @@ function renderInventory(list) {
   attachRestockEvents();
 }
 
-// ── Attach restock button events ──
 function attachRestockEvents() {
   if (!isAdmin()) return;
 
   document.querySelectorAll('.restock-button').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      restockingId = Number(btn.dataset.id);
+      restockingId = btn.dataset.id;
       openRestockModal(restockingId);
     });
   });
 }
 
-// ── Open restock modal ──
 function openRestockModal(productId) {
-  const product = products.find(function (p) { return p.id === productId; });
+  const product = products.find(function (p) { return p.id == productId; });
   if (!product) return;
 
   restockProductInfo.innerHTML =
@@ -155,16 +148,13 @@ function openRestockModal(productId) {
   restockModal.style.display = 'flex';
 }
 
-// ── Close restock modal ──
 function closeModal() {
   restockModal.style.display = 'none';
   restockingId = null;
 }
 
-// ── Confirm restock ──
-function handleRestock() {
+async function handleRestock() {
   const quantity = Number(restockQuantityInput.value);
-
   restockError.textContent = '';
 
   if (!restockQuantityInput.value || isNaN(quantity)) {
@@ -177,31 +167,32 @@ function handleRestock() {
     return;
   }
 
-  const product = products.find(function (p) { return p.id === restockingId; });
-  if (!product) return;
-
-  product.stock += quantity;
-  saveProducts();
-  closeModal();
-  applyFilters();
-  renderSummary();
+  confirmRestock.disabled = true;
+  try {
+    const result = await adjustStock(restockingId, { quantity: quantity, type: 'restock' });
+    if (result && result.success) {
+      closeModal();
+      await refreshInventory();
+    } else {
+      restockError.textContent = result ? result.message : 'Restock failed. Please try again.';
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  } finally {
+    confirmRestock.disabled = false;
+  }
 }
 
-// ── Apply search + category + status filter ──
 function applyFilters() {
   const search = inventorySearch.value.trim().toLowerCase();
   let filtered = products.slice();
 
   if (activeCategory !== 'All') {
-    filtered = filtered.filter(function (p) {
-      return p.category === activeCategory;
-    });
+    filtered = filtered.filter(function (p) { return p.category === activeCategory; });
   }
 
   if (activeStatus !== 'all') {
-    filtered = filtered.filter(function (p) {
-      return getStockStatus(p.stock).key === activeStatus;
-    });
+    filtered = filtered.filter(function (p) { return getStockStatus(p.stock).key === activeStatus; });
   }
 
   if (search !== '') {
@@ -214,7 +205,25 @@ function applyFilters() {
   renderInventory(filtered);
 }
 
-// ── Event listeners ──
+async function refreshInventory() {
+  showLoading('#inventory-table-body');
+  try {
+    const result = await getInventory();
+    if (result && result.success) {
+      products = result.data || [];
+    } else {
+      showApiError(result ? result.message : 'Failed to load inventory.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  } finally {
+    hideLoading('#inventory-table-body');
+  }
+  renderCategorySelect();
+  await renderSummary();
+  applyFilters();
+}
+
 if (currentUser && userName) {
   userName.textContent = currentUser.fullName;
 }
@@ -242,13 +251,8 @@ restockModal.addEventListener('click', function (e) {
   if (e.target === restockModal) closeModal();
 });
 
-// Show "Action" column header for admin
 if (isAdmin() && restockColHeader) {
   restockColHeader.textContent = 'Action';
 }
 
-// ── Initialize ──
-loadProducts();
-renderSummary();
-renderCategorySelect();
-applyFilters();
+refreshInventory();

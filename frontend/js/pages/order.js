@@ -3,10 +3,7 @@ checkAuth();
 const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
 const newSaleButton = document.getElementById("new-sale-button");
-
 const productGrid = document.getElementById("pos-product-grid");
-
-const savedProducts = localStorage.getItem("products");
 
 const cartItems = document.getElementById("cart-items");
 const cartSubtotal = document.getElementById("cart-subtotal");
@@ -18,7 +15,6 @@ const changeAmount = document.getElementById("change-amount");
 const paymentWarning = document.getElementById("payment-warning");
 
 const clearCartButton = document.getElementById("clear-cart-button");
-
 const completeSaleButton = document.getElementById("complete-sale-button");
 const saleMessage = document.getElementById("sale-message");
 
@@ -26,10 +22,34 @@ let products = [];
 let cart = [];
 let activeCategory = 'All';
 
-if (savedProducts !== null) {
-  products = JSON.parse(savedProducts);
-}
+const taxEnabled = localStorage.getItem('taxEnabled') === 'true';
+const taxDefaultOn = localStorage.getItem('taxDefaultOn') === 'true';
+const taxRate = parseFloat(localStorage.getItem('taxRate') || '0.03');
+let cartTaxOn = taxDefaultOn;
 
+const cartTaxRow = document.getElementById('cart-tax-row');
+const cartSubtotalRow = document.getElementById('cart-subtotal-row');
+const cartTaxToggle = document.getElementById('cart-tax-toggle');
+
+async function init() {
+  showLoading('#pos-product-grid');
+  try {
+    const result = await getProducts();
+    if (result && result.success) {
+      products = result.data || [];
+    } else {
+      showApiError(result ? result.message : 'Failed to load products.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  } finally {
+    hideLoading('#pos-product-grid');
+  }
+  renderCategoryPills();
+  renderProductGrid();
+  renderCart();
+  applyTaxRowVisibility();
+}
 
 clearCartButton.addEventListener("click", function () {
   clearCart();
@@ -96,26 +116,24 @@ function attachCartEvents() {
     input.addEventListener("change", function () {
       const productId = Number(input.dataset.id);
       const newQuantity = Number(input.value);
-
       updateQuantity(productId, newQuantity);
     });
   });
 }
 
-
-function renderProductGrid(productList = products) {
+function renderProductGrid(productList) {
   productGrid.innerHTML = "";
 
-  if (productList.length === 0) {
-    productGrid.innerHTML = `
-      <p class="cart-empty-message">No products available.</p>
-    `;
+  const list = productList || products;
+
+  if (list.length === 0) {
+    productGrid.innerHTML = `<p class="cart-empty-message">No products available.</p>`;
     return;
   }
 
   var thr = (typeof getLowStockThreshold === 'function') ? getLowStockThreshold() : 50;
 
-  productList.forEach(function (product) {
+  list.forEach(function (product) {
     const productCard = document.createElement("button");
 
     productCard.type = "button";
@@ -155,7 +173,6 @@ function renderProductGrid(productList = products) {
   });
 }
 
-// ── Update product card dots without full grid re-render ──
 function updateProductDots() {
   var thr = (typeof getLowStockThreshold === 'function') ? getLowStockThreshold() : 50;
 
@@ -194,23 +211,14 @@ function updateProductDots() {
 }
 
 function addToCart(productId) {
-  const product = products.find(function (product) {
-    return product.id === productId;
-  });
+  const product = products.find(function (p) { return p.id === productId; });
 
-  if (!product || product.stock <= 0) {
-    return;
-  }
+  if (!product || product.stock <= 0) return;
 
-  const existingCartItem = cart.find(function (item) {
-    return item.productId === productId;
-  });
+  const existingCartItem = cart.find(function (item) { return item.productId === productId; });
 
   if (existingCartItem) {
-    if (existingCartItem.quantity >= product.stock) {
-      return;
-    }
-
+    if (existingCartItem.quantity >= product.stock) return;
     existingCartItem.quantity += 1;
   } else {
     cart.push({
@@ -225,21 +233,13 @@ function addToCart(productId) {
 }
 
 function removeFromCart(productId) {
-  cart = cart.filter(function (item) {
-    return item.productId !== productId;
-  });
-
+  cart = cart.filter(function (item) { return item.productId !== productId; });
   renderCart();
 }
 
 function updateQuantity(productId, newQuantity) {
-  const product = products.find(function (product) {
-    return product.id === productId;
-  });
-
-  if (!product) {
-    return;
-  }
+  const product = products.find(function (p) { return p.id === productId; });
+  if (!product) return;
 
   if (newQuantity <= 0) {
     const confirmed = confirm("Remove this item from the cart?");
@@ -247,33 +247,18 @@ function updateQuantity(productId, newQuantity) {
       removeFromCart(productId);
     } else {
       const quantityInput = document.querySelector(`.quantity-input[data-id="${productId}"]`);
-      if (quantityInput) {
-        quantityInput.value = 1;
-      }
-      const cartItem = cart.find(function (item) {
-        return item.productId === productId;
-      });
-      if (cartItem) {
-        cartItem.quantity = 1;
-      }
+      if (quantityInput) quantityInput.value = 1;
+      const cartItem = cart.find(function (item) { return item.productId === productId; });
+      if (cartItem) cartItem.quantity = 1;
       updateCartDisplay();
     }
     return;
   }
 
-  const cartItem = cart.find(function (item) {
-    return item.productId === productId;
-  });
+  const cartItem = cart.find(function (item) { return item.productId === productId; });
+  if (!cartItem) return;
 
-  if (!cartItem) {
-    return;
-  }
-
-  if (newQuantity > product.stock) {
-    cartItem.quantity = product.stock;
-  } else {
-    cartItem.quantity = newQuantity;
-  }
+  cartItem.quantity = newQuantity > product.stock ? product.stock : newQuantity;
 
   updateCartDisplay();
 }
@@ -290,7 +275,6 @@ function updateCartDisplay() {
   updateChangeDisplay();
   updateProductDots();
 
-  // Update individual item totals and maxed dot without re-rendering entire cart
   cart.forEach(function (item) {
     const cartItemElement = cartItems.querySelector(`[data-product-id="${item.productId}"]`);
     if (cartItemElement) {
@@ -300,7 +284,6 @@ function updateCartDisplay() {
       const totalDisplay = cartItemElement.querySelector(".cart-item-total strong");
       if (totalDisplay) totalDisplay.textContent = formatPeso(item.price * item.quantity);
 
-      // Update maxed-out dot in cart item name
       const product = products.find(function (p) { return p.id === item.productId; });
       const nameEl = cartItemElement.querySelector("h3");
       if (nameEl && product) {
@@ -329,9 +312,7 @@ function renderCart() {
   }
 
   if (cart.length === 0) {
-    cartItems.innerHTML = `
-      <p class="cart-empty-message">No items added yet.</p>
-    `;
+    cartItems.innerHTML = `<p class="cart-empty-message">No items added yet.</p>`;
   } else {
     cart.forEach(function (item) {
       const product = products.find(function (p) { return p.id === item.productId; });
@@ -350,13 +331,11 @@ function renderCart() {
           '<h3>' + item.name + maxedDot + '</h3>' +
           '<p>' + formatPeso(item.price) + ' each</p>' +
         '</div>' +
-
         '<div class="cart-item-controls">' +
           '<button type="button" class="quantity-button decrease-button" data-id="' + item.productId + '">-</button>' +
           '<input type="number" class="quantity-input" value="' + item.quantity + '" min="0" data-id="' + item.productId + '" />' +
           '<button type="button" class="quantity-button increase-button" data-id="' + item.productId + '">+</button>' +
         '</div>' +
-
         '<div class="cart-item-total">' +
           '<strong>' + formatPeso(item.price * item.quantity) + '</strong>' +
         '</div>';
@@ -405,7 +384,6 @@ function updateChangeDisplay() {
   }
 
   const change = paymentAmount - total;
-
   changeAmount.textContent = formatPeso(change);
 
   if (change >= 0) {
@@ -416,7 +394,7 @@ function updateChangeDisplay() {
   }
 }
 
-function completeSale() {
+async function completeSale() {
   const subtotal = getCartTotal();
   const tax = (taxEnabled && cartTaxOn) ? subtotal * taxRate : 0;
   const total = subtotal + tax;
@@ -443,7 +421,6 @@ function completeSale() {
   const change = paymentAmount - total;
 
   const saleRecord = {
-    id: Date.now(),
     items: cart.map(function (item) {
       return {
         productId: item.productId,
@@ -459,47 +436,41 @@ function completeSale() {
     total: total,
     payment: paymentAmount,
     change: change,
-    timestamp: new Date().toISOString(),
     cashier: currentUser ? currentUser.fullName : "Unknown Cashier"
   };
 
-  const savedSales = localStorage.getItem("sales");
-  let sales = [];
+  completeSaleButton.disabled = true;
+  try {
+    const result = await createSale(saleRecord);
 
-  if (savedSales !== null) {
-    sales = JSON.parse(savedSales);
-  }
+    if (result && result.success) {
+      cart = [];
+      paymentAmountInput.value = "";
+      changeAmount.textContent = formatPeso(0);
+      changeAmount.classList.remove("change-positive");
+      changeAmount.classList.remove("change-negative");
+      paymentWarning.textContent = "";
 
-  sales.push(saleRecord);
+      try {
+        const refreshed = await getProducts();
+        if (refreshed && refreshed.success) products = refreshed.data || [];
+      } catch (e) {
+        // non-fatal: grid will still show with stale stock until next reload
+      }
 
-  localStorage.setItem("sales", JSON.stringify(sales));
+      renderCart();
+      renderCategoryPills();
+      applyFilters();
 
-  cart.forEach(function (item) {
-    const product = products.find(function (product) {
-      return product.id === item.productId;
-    });
-
-    if (product) {
-      product.stock = product.stock - item.quantity;
+      showReceipt(result.data);
+    } else {
+      saleMessage.textContent = result ? result.message : "Sale failed. Please try again.";
     }
-  });
-
-  localStorage.setItem("products", JSON.stringify(products));
-  localStorage.setItem("lastSale", JSON.stringify(saleRecord));
-
-  cart = [];
-  paymentAmountInput.value = "";
-  changeAmount.textContent = formatPeso(0);
-  changeAmount.classList.remove("change-positive");
-  changeAmount.classList.remove("change-negative");
-  paymentWarning.textContent = "";
-
-  renderCart();
-  renderProductGrid();
-  renderCategoryPills();
-
-  saleMessage.textContent = "Sale completed successfully.";
-  showReceipt(saleRecord);
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  } finally {
+    completeSaleButton.disabled = false;
+  }
 }
 
 function showReceipt(sale) {
@@ -514,14 +485,12 @@ function showReceipt(sale) {
 
   sale.items.forEach(function (item) {
     const row = document.createElement("tr");
-
     row.innerHTML = `
       <td>${item.name}</td>
       <td>${item.quantity}</td>
       <td>${formatPeso(item.price)}</td>
       <td>${formatPeso(item.lineTotal)}</td>
     `;
-
     receiptItemsBody.appendChild(row);
   });
 
@@ -535,14 +504,13 @@ function showReceipt(sale) {
 
 function renderCategoryPills() {
   const pillsContainer = document.getElementById('pos-category-pills');
-  const selectEl       = document.getElementById('pos-category-select');
+  const selectEl = document.getElementById('pos-category-select');
   if (!pillsContainer) return;
 
   const categories = ['All', ...new Set(
     products.map(function (p) { return p.category; }).filter(Boolean)
   )];
 
-  // ── Pills (desktop) ──
   pillsContainer.innerHTML = '';
   categories.forEach(function (category) {
     const pill = document.createElement('button');
@@ -550,9 +518,7 @@ function renderCategoryPills() {
     pill.className = 'category-pill';
     pill.textContent = category;
 
-    if (category === activeCategory) {
-      pill.classList.add('is-active');
-    }
+    if (category === activeCategory) pill.classList.add('is-active');
 
     pill.addEventListener('click', function () {
       activeCategory = category;
@@ -563,7 +529,6 @@ function renderCategoryPills() {
     pillsContainer.appendChild(pill);
   });
 
-  // ── Select dropdown (mobile) ──
   if (selectEl) {
     selectEl.innerHTML = '';
     categories.forEach(function (category) {
@@ -583,22 +548,17 @@ function applyFilters() {
   let filtered = products.slice();
 
   if (activeCategory !== 'All') {
-    filtered = filtered.filter(function (p) {
-      return p.category === activeCategory;
-    });
+    filtered = filtered.filter(function (p) { return p.category === activeCategory; });
   }
 
   if (searchTerm !== '') {
-    filtered = filtered.filter(function (p) {
-      return p.name.toLowerCase().includes(searchTerm);
-    });
+    filtered = filtered.filter(function (p) { return p.name.toLowerCase().includes(searchTerm); });
   }
 
   renderProductGrid(filtered);
 }
 
-document.getElementById('pos-product-search')
-  .addEventListener('keyup', applyFilters);
+document.getElementById('pos-product-search').addEventListener('keyup', applyFilters);
 
 var posCategorySelect = document.getElementById('pos-category-select');
 if (posCategorySelect) {
@@ -609,22 +569,11 @@ if (posCategorySelect) {
   });
 }
 
-const taxEnabled = localStorage.getItem('taxEnabled') === 'true';
-const taxDefaultOn = localStorage.getItem('taxDefaultOn') === 'true';
-const taxRate = parseFloat(localStorage.getItem('taxRate') || '0.03');
-let cartTaxOn = taxDefaultOn;
-
-const cartTaxRow = document.getElementById('cart-tax-row');
-const cartSubtotalRow = document.getElementById('cart-subtotal-row');
-const cartTaxToggle = document.getElementById('cart-tax-toggle');
-
 function applyTaxRowVisibility() {
   const show = taxEnabled && cartTaxOn;
   if (cartTaxRow) cartTaxRow.style.display = show ? '' : 'none';
   if (cartSubtotalRow) cartSubtotalRow.style.display = show ? '' : 'none';
-  if (cartTaxToggle) {
-    cartTaxToggle.classList.toggle('is-active', cartTaxOn);
-  }
+  if (cartTaxToggle) cartTaxToggle.classList.toggle('is-active', cartTaxOn);
 }
 
 if (cartTaxToggle && taxEnabled) {
@@ -634,8 +583,4 @@ if (cartTaxToggle && taxEnabled) {
   });
 }
 
-applyTaxRowVisibility();
-
-renderCategoryPills();
-renderProductGrid();
-renderCart();
+init();

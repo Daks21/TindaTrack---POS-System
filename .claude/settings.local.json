@@ -3,7 +3,26 @@
     "allow": [
       "Bash(node:*)",
       "Bash(wc -l C:/Users/Sonsuman/OneDrive/Desktop/Tinda_Track/frontend/css/*.css C:/Users/Sonsuman/OneDrive/Desktop/Tinda_Track/frontend/css/pages/*.css)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm install *)",
+      "Bash(Start-Sleep -Seconds 2)",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/register -H \"Content-Type: application/json\" -d '{}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/register -H \"Content-Type: application/json\" -d '{\"fullName\":\"Test\",\"email\":\"notanemail\",\"password\":\"12345678\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/register -H \"Content-Type: application/json\" -d '{\"fullName\":\"Test\",\"email\":\"test@test.com\",\"password\":\"short\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/register -H \"Content-Type: application/json\" -d '{\"fullName\":\"Admin User\",\"email\":\"admin@celsopos.com\",\"password\":\"admin123\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/register -H \"Content-Type: application/json\" -d '{\"fullName\":\"New User\",\"email\":\"newuser@test.com\",\"password\":\"password123\"}')",
+      "PowerShell($login = Invoke-RestMethod -Uri \"http://localhost:3000/api/auth/login\" -Method POST -ContentType \"application/json\" -Body '{\"email\":\"admin@celsopos.com\",\"password\":\"admin123\"}'; $token = $login.token; Write-Host \"TOKEN: $token\")",
+      "Bash(curl -s http://localhost:3000/api/health)",
+      "Bash(curl *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)",
+      "Bash(taskkill /PID 35236 /F)",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Sonsuman\\\\OneDrive\\\\Desktop\\\\Celso_pos\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(ConvertTo-Csv -NoTypeInformation)",
+      "Bash(Out-String -Width 500)"
     ]
   }
 }

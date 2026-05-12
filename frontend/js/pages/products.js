@@ -1,9 +1,7 @@
-let products = JSON.parse(localStorage.getItem("products") || "[]");
+let products = [];
 let editingProductId = null;
 
 checkAuth();
-
-const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
 const productsTableBody = document.getElementById("products-table-body");
 
@@ -20,9 +18,9 @@ const productUnitInput = document.getElementById("product-unit");
 const addProductButton = document.getElementById("add-product-button");
 const closeModalButton = document.getElementById("close-modal-button");
 const productForm = document.getElementById("product-form");
+const submitButton = productForm.querySelector('[type="submit"]');
 
 const productSearchInput = document.getElementById("product-search");
-
 const productCategorySelect = document.getElementById('product-category-select');
 
 let activeCategory = 'All';
@@ -44,19 +42,44 @@ function renderCategorySelect() {
   });
 }
 
-function applyFilters() {
-  const query = productSearchInput.value.trim().toLowerCase();
-  let filtered = products.slice();
+async function applyFilters() {
+  const query = productSearchInput.value.trim();
+  const params = {};
+  if (query) params.search = query;
+  if (activeCategory !== 'All') params.category = activeCategory;
 
-  if (activeCategory !== 'All') {
-    filtered = filtered.filter(function (p) { return p.category === activeCategory; });
+  showLoading('#products-table-body');
+  try {
+    const result = await getProducts(params);
+    if (result && result.success) {
+      renderProducts(result.data || []);
+    } else {
+      showApiError(result ? result.message : 'Failed to filter products.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  } finally {
+    hideLoading('#products-table-body');
   }
+}
 
-  if (query !== '') {
-    filtered = filtered.filter(function (p) { return p.name.toLowerCase().includes(query); });
+async function refreshProducts() {
+  showLoading('#products-table-body');
+  try {
+    const result = await getProducts();
+    if (result && result.success) {
+      products = result.data || [];
+    } else {
+      showApiError(result ? result.message : 'Failed to load products.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  } finally {
+    hideLoading('#products-table-body');
   }
-
-  renderProducts(filtered);
+  renderCategorySelect();
+  renderProductsSummary();
+  await applyFilters();
 }
 
 productSearchInput.addEventListener("keyup", applyFilters);
@@ -76,7 +99,7 @@ closeModalButton.addEventListener("click", function () {
   closeProductModal();
 });
 
-productForm.addEventListener("submit", function (event) {
+productForm.addEventListener("submit", async function (event) {
   event.preventDefault();
 
   const productData = {
@@ -88,43 +111,27 @@ productForm.addEventListener("submit", function (event) {
     unit: productUnitInput.value
   };
 
-  if (editingProductId === null) {
-    const newProduct = {
-      id: Date.now(),
-      name: productData.name,
-      category: productData.category,
-      price: productData.price,
-      cost: productData.cost,
-      stock: productData.stock,
-      unit: productData.unit
-    };
+  if (submitButton) submitButton.disabled = true;
 
-    products.push(newProduct);
-  } else {
-    products = products.map(function (product) {
-      if (product.id === editingProductId) {
-        return {
-          id: product.id,
-          name: productData.name,
-          category: productData.category,
-          price: productData.price,
-          cost: productData.cost,
-          stock: productData.stock,
-          unit: productData.unit
-        };
-      }
+  try {
+    let result;
+    if (editingProductId === null) {
+      result = await createProduct(productData);
+    } else {
+      result = await updateProduct(editingProductId, productData);
+    }
 
-      return product;
-    });
+    if (result && result.success) {
+      await refreshProducts();
+      closeProductModal();
+    } else {
+      showApiError(result ? result.message : 'Failed to save product.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+  } finally {
+    if (submitButton) submitButton.disabled = false;
   }
-
-  localStorage.setItem("products", JSON.stringify(products));
-
-  renderCategorySelect();
-  renderProductsSummary();
-  applyFilters();
-
-  closeProductModal();
 });
 
 productModal.addEventListener("click", function (event) {
@@ -133,10 +140,10 @@ productModal.addEventListener("click", function (event) {
   }
 });
 
-function renderProducts(productList = products) {
+function renderProducts(productList) {
   productsTableBody.innerHTML = "";
 
-  productList.forEach(function (product) {
+  (productList || products).forEach(function (product) {
     const row = document.createElement("tr");
 
     row.innerHTML = `
@@ -163,35 +170,24 @@ function renderProducts(productList = products) {
 }
 
 function attachProductActionEvents() {
-  const editButtons = document.querySelectorAll(".edit-button");
-  const deleteButtons = document.querySelectorAll(".delete-button");
-
-  editButtons.forEach(function (button) {
+  document.querySelectorAll(".edit-button").forEach(function (button) {
     button.addEventListener("click", function () {
-      const productId = Number(button.dataset.id);
-      openEditProductModal(productId);
+      openEditProductModal(button.dataset.id);
     });
   });
 
-  deleteButtons.forEach(function (button) {
+  document.querySelectorAll(".delete-button").forEach(function (button) {
     button.addEventListener("click", function () {
-      const productId = Number(button.dataset.id);
-      deleteProduct(productId);
+      handleDeleteProduct(button.dataset.id);
     });
   });
 }
 
 function openEditProductModal(productId) {
-  const product = products.find(function (product) {
-    return product.id === productId;
-  });
-
-  if (!product) {
-    return;
-  }
+  const product = products.find(function (p) { return p.id == productId; });
+  if (!product) return;
 
   editingProductId = productId;
-
   modalTitle.textContent = "Edit Product";
 
   productNameInput.value = product.name;
@@ -204,31 +200,25 @@ function openEditProductModal(productId) {
   productModal.style.display = "flex";
 }
 
-function deleteProduct(productId) {
-  const confirmDelete = window.confirm("Are you sure you want to delete this product?");
+async function handleDeleteProduct(productId) {
+  if (!window.confirm("Are you sure you want to delete this product?")) return;
 
-  if (!confirmDelete) {
-    return;
+  try {
+    const result = await deleteProduct(productId);
+    if (result && result.success) {
+      await refreshProducts();
+    } else {
+      showApiError(result ? result.message : 'Failed to delete product.');
+    }
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
   }
-
-  products = products.filter(function (product) {
-    return product.id !== productId;
-  });
-
-  localStorage.setItem("products", JSON.stringify(products));
-
-  renderCategorySelect();
-  renderProductsSummary();
-  applyFilters();
 }
 
 function openAddProductModal() {
   editingProductId = null;
-
   modalTitle.textContent = "Add Product";
-
   productForm.reset();
-
   productModal.style.display = "flex";
 }
 
@@ -239,11 +229,11 @@ function closeProductModal() {
 }
 
 function renderProductsSummary() {
-  var summary = document.getElementById('products-summary');
+  const summary = document.getElementById('products-summary');
   if (!summary) return;
 
-  var totalAssets = products.reduce(function (sum, p) { return sum + (p.cost || 0) * (p.stock || 0); }, 0);
-  var totalProfit = products.reduce(function (sum, p) { return sum + ((p.price || 0) - (p.cost || 0)) * (p.stock || 0); }, 0);
+  const totalAssets = products.reduce(function (sum, p) { return sum + (p.cost || 0) * (p.stock || 0); }, 0);
+  const totalProfit = products.reduce(function (sum, p) { return sum + ((p.price || 0) - (p.cost || 0)) * (p.stock || 0); }, 0);
 
   function peso(n) {
     return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -260,6 +250,4 @@ function renderProductsSummary() {
     '</div>';
 }
 
-renderCategorySelect();
-renderProductsSummary();
-renderProducts();
+refreshProducts();
