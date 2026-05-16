@@ -314,6 +314,15 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     );
 
+    initPrefToggle(
+      'items-popover-toggle',
+      localStorage.getItem('dashboardItemsPopover') !== 'false',
+      function(isOn) {
+        localStorage.setItem('dashboardItemsPopover', String(isOn));
+        syncToDb();
+      }
+    );
+
   } catch (e) {
     console.error('Error parsing user data:', e);
     window.location.href = '../index.html';

@@ -174,8 +174,9 @@ function _cachePreferences(prefs, userId) {
   localStorage.setItem('taxDefaultOn',         String(p.taxDefaultOn));
   localStorage.setItem('lowStockThreshold',    String(p.lowStockThreshold));
   localStorage.setItem('stockColors',          JSON.stringify(p.stockColors));
-  localStorage.setItem('dashboardRecentCount', String(p.dashboardRecentCount));
-  localStorage.setItem('dashboardWidgets',     JSON.stringify(p.dashboardWidgets));
+  localStorage.setItem('dashboardRecentCount',  String(p.dashboardRecentCount));
+  localStorage.setItem('dashboardItemsPopover', String(p.dashboardItemsPopover !== false));
+  localStorage.setItem('dashboardWidgets',      JSON.stringify(p.dashboardWidgets));
 
   var navKey = 'celso_navprefs_' + String(userId);
   localStorage.setItem(navKey, JSON.stringify({

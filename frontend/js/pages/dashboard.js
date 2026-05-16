@@ -441,13 +441,12 @@ async function initDashboard() {
     }
   }
 
-  // Recent transactions — today only
+  // Recent transactions — most recent N sales across all dates
   var recentTxBody = document.getElementById('recent-transactions-body');
   if (recentTxBody) {
-    var todayStr = new Date().toISOString().slice(0, 10);
     let salesResult;
     try {
-      salesResult = await getSales({ from: todayStr, to: todayStr });
+      salesResult = await getSales();
     } catch (err) {
       showApiError('Network error. Is the server running?');
       salesResult = { data: [] };
@@ -459,22 +458,25 @@ async function initDashboard() {
 
     if (recentSales.length === 0) {
       recentTxBody.innerHTML =
-        '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--color-text-muted);">No transactions recorded today.</td></tr>';
+        '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--color-text-muted);">No transactions recorded yet.</td></tr>';
     } else {
       var txHtml = '';
       recentSales.forEach(function (sale) {
-        var d         = new Date(sale.timestamp);
-        var dateStr   = d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
-        var timeStr   = d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
-        var itemCount = sale.items.reduce(function (s, i) { return s + i.quantity; }, 0);
-        var totalFmt  = _formatPeso(sale.total);
+        var d             = new Date(sale.timestamp);
+        var dateStr       = d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+        var timeStr       = d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+        var itemCount     = sale.items.reduce(function (s, i) { return s + i.quantity; }, 0);
+        var totalFmt      = _formatPeso(sale.total);
         var receiptDisplay = sale.receiptNo ? sale.receiptNo.replace(/^RCPT-/, '') : String(sale.id).padStart(6, '0');
 
+        var itemsJson = encodeURIComponent(JSON.stringify(sale.items));
         txHtml +=
           '<tr>' +
             '<td>' + receiptDisplay + '</td>' +
-            '<td>' + dateStr + ' - ' + timeStr + '</td>' +
-            '<td>' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</td>' +
+            '<td>' + dateStr + ' · ' + timeStr + '</td>' +
+            '<td class="tx-items-cell" data-items="' + itemsJson + '">' +
+              itemCount + ' item' + (itemCount !== 1 ? 's' : '') +
+            '</td>' +
             '<td>' + totalFmt + '</td>' +
           '</tr>';
       });
@@ -501,3 +503,103 @@ async function initDashboard() {
 }
 
 initDashboard();
+
+// ── Items popover ──
+
+(function () {
+  if (localStorage.getItem('dashboardItemsPopover') === 'false') return;
+
+  var popover    = document.getElementById('items-popover');
+  var isMobile   = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  var activeCell = null;
+
+  function buildPopover(items) {
+    var html = '';
+    items.forEach(function (item) {
+      var lineFmt = _formatPeso(item.lineTotal || (item.price * item.quantity));
+      html +=
+        '<div class="items-popover-row">' +
+          '<span class="items-popover-name" title="' + item.name + '">' + item.name + '</span>' +
+          '<span class="items-popover-qty">&times;' + item.quantity + '&nbsp;&nbsp;' + lineFmt + '</span>' +
+        '</div>';
+    });
+    var grandTotal = items.reduce(function (s, i) {
+      return s + (i.lineTotal || i.price * i.quantity);
+    }, 0);
+    html +=
+      '<hr class="items-popover-divider">' +
+      '<div class="items-popover-total">' +
+        '<span>Total</span><span>' + _formatPeso(grandTotal) + '</span>' +
+      '</div>';
+    popover.innerHTML = html;
+  }
+
+  // position: fixed — all coordinates are viewport-relative, no scrollY needed
+  function positionPopover(cell) {
+    var rect  = cell.getBoundingClientRect();
+    var gap   = 6;
+
+    // measure popover height off-screen
+    popover.style.visibility = 'hidden';
+    popover.style.opacity    = '0';
+    popover.style.display    = 'block';
+    var ph = popover.offsetHeight;
+    var pw = popover.offsetWidth || 220;
+    popover.style.display    = '';
+    popover.style.visibility = '';
+    popover.style.opacity    = '';
+
+    // vertical: prefer below, flip above if not enough room
+    var top = (window.innerHeight - rect.bottom >= ph + gap)
+      ? rect.bottom + gap
+      : rect.top - ph - gap;
+    popover.style.top = Math.max(8, top) + 'px';
+
+    // horizontal: align to cell left, clamp to right edge
+    var left = Math.min(rect.left, window.innerWidth - pw - 8);
+    popover.style.left = Math.max(8, left) + 'px';
+  }
+
+  function showPopover(cell) {
+    if (activeCell === cell && popover.classList.contains('is-visible')) return;
+    var items = [];
+    try { items = JSON.parse(decodeURIComponent(cell.dataset.items || '[]')); } catch (e) {}
+    if (!items.length) return;
+    activeCell = cell;
+    buildPopover(items);
+    positionPopover(cell);
+    popover.classList.add('is-visible');
+  }
+
+  function hidePopover() {
+    popover.classList.remove('is-visible');
+    activeCell = null;
+  }
+
+  // Hide on scroll — cell moves but fixed popover stays put
+  window.addEventListener('scroll', hidePopover, { passive: true });
+
+  // Desktop — hover only
+  if (!isMobile) {
+    document.addEventListener('mouseover', function (e) {
+      var cell = e.target.closest('.tx-items-cell');
+      if (cell) { showPopover(cell); return; }
+      if (!popover.contains(e.target)) hidePopover();
+    });
+    popover.addEventListener('mouseleave', hidePopover);
+  }
+
+  // Mobile — single tap to open, tap anywhere else to close
+  if (isMobile) {
+    document.addEventListener('click', function (e) {
+      var cell = e.target.closest('.tx-items-cell');
+      if (cell) {
+        e.stopPropagation();
+        if (activeCell === cell) { hidePopover(); return; }
+        showPopover(cell);
+        return;
+      }
+      if (!popover.contains(e.target)) hidePopover();
+    });
+  }
+})();
