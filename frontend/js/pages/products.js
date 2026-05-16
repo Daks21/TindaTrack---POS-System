@@ -77,7 +77,6 @@ async function refreshProducts() {
     hideLoading('#products-table-body');
   }
   renderCategorySelect();
-  renderProductsSummary();
   await applyFilters();
 }
 
@@ -224,28 +223,6 @@ function closeProductModal() {
   productModal.style.display = "none";
   productForm.reset();
   editingProductId = null;
-}
-
-function renderProductsSummary() {
-  const summary = document.getElementById('products-summary');
-  if (!summary) return;
-
-  const totalAssets = products.reduce(function (sum, p) { return sum + (p.cost || 0) * (p.stock || 0); }, 0);
-  const totalProfit = products.reduce(function (sum, p) { return sum + ((p.price || 0) - (p.cost || 0)) * (p.stock || 0); }, 0);
-
-  function peso(n) {
-    return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  summary.innerHTML =
-    '<div class="inventory-stat">' +
-      '<p class="inventory-stat-value products-stat-value">' + peso(totalAssets) + '</p>' +
-      '<p class="inventory-stat-label">Total Assets - Cost</p>' +
-    '</div>' +
-    '<div class="inventory-stat">' +
-      '<p class="inventory-stat-value products-stat-value" style="color:var(--color-primary);">' + peso(totalProfit) + '</p>' +
-      '<p class="inventory-stat-label">Calculated Profit</p>' +
-    '</div>';
 }
 
 refreshProducts();

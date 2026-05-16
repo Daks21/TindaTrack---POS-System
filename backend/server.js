@@ -53,9 +53,9 @@ const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 app.use('/api/auth/login',    authLimiter);
 app.use('/api/auth/register', authLimiter);
 
-// --- Rate limiting on admin write endpoint ---
+// --- Rate limiting on stock adjustment write endpoint only ---
 const adjustLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60 });
-app.use('/api/inventory', adjustLimiter);
+app.use('/api/inventory/:productId/adjust', adjustLimiter);
 
 // --- Health check ---
 app.get('/api/health', async (req, res) => {

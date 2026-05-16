@@ -84,6 +84,15 @@ function updateKPIs(kpis) {
   document.getElementById('kpi-units').textContent        = kpis.totalUnits || 0;
 }
 
+function updateInventoryKPIs(products) {
+  var totalAssets = products.reduce(function (sum, p) { return sum + (p.cost || 0) * (p.stock || 0); }, 0);
+  var totalProfit = products.reduce(function (sum, p) { return sum + ((p.price || 0) - (p.cost || 0)) * (p.stock || 0); }, 0);
+  var elAssets = document.getElementById('kpi-total-assets');
+  var elProfit = document.getElementById('kpi-calc-profit');
+  if (elAssets) elAssets.textContent = formatPeso(totalAssets);
+  if (elProfit) elProfit.textContent = formatPeso(totalProfit);
+}
+
 // ── Chart rendering ──
 
 var chartInstances = {};
@@ -454,12 +463,14 @@ async function renderAll() {
     var results = await Promise.all([
       getKPIs(fromStr, toStr),
       getCharts(fromStr, toStr),
-      getHeatmap()
+      getHeatmap(),
+      getProducts()
     ]);
 
-    var kpiResult     = results[0];
-    var chartResult   = results[1];
-    var heatmapResult = results[2];
+    var kpiResult      = results[0];
+    var chartResult    = results[1];
+    var heatmapResult  = results[2];
+    var productsResult = results[3];
 
     if (kpiResult && kpiResult.success) {
       updateKPIs(kpiResult.data);
@@ -479,6 +490,10 @@ async function renderAll() {
       renderDayOfWeekChart(_toDayOfWeek(cd.byDayOfWeek));
     } else if (chartResult && !chartResult.success) {
       showApiError(chartResult.message || 'Failed to load chart data.');
+    }
+
+    if (productsResult && productsResult.success) {
+      updateInventoryKPIs(productsResult.data || []);
     }
   } catch (err) {
     showApiError('Network error. Is the server running?');
