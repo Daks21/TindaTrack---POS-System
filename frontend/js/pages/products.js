@@ -12,7 +12,6 @@ const productNameInput = document.getElementById("product-name");
 const productCategoryInput = document.getElementById("product-category");
 const productPriceInput = document.getElementById("product-price");
 const productCostInput = document.getElementById("product-cost");
-const productStockInput = document.getElementById("product-stock");
 const productUnitInput = document.getElementById("product-unit");
 
 const addProductButton = document.getElementById("add-product-button");
@@ -107,7 +106,7 @@ productForm.addEventListener("submit", async function (event) {
     category: productCategoryInput.value.trim(),
     price: Number(productPriceInput.value),
     cost: Number(productCostInput.value),
-    stock: Number(productStockInput.value),
+    stock: 0,
     unit: productUnitInput.value
   };
 
@@ -194,7 +193,6 @@ function openEditProductModal(productId) {
   productCategoryInput.value = product.category;
   productPriceInput.value = product.price;
   productCostInput.value = product.cost;
-  productStockInput.value = product.stock;
   productUnitInput.value = product.unit;
 
   productModal.style.display = "flex";

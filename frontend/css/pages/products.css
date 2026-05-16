@@ -4,6 +4,10 @@
   width: auto;
 }
 
+.form-row-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .products-toolbar .search-input {
   width: 350px;
   flex-shrink: 0;
