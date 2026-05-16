@@ -295,10 +295,97 @@
   cursor: default;
 }
 
+/* ── Nav Preference Controls ── */
+
+.pref-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 2px;
+}
+
+.pref-divider::before,
+.pref-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.pref-divider span {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.pref-mobile-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+  background-color: rgba(90, 158, 111, 0.1);
+  border-radius: 999px;
+  padding: 2px 7px;
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+.pref-radio-group {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pref-radio-btn {
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text-muted);
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.pref-radio-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.pref-radio-btn.is-selected {
+  border-color: var(--color-primary);
+  background-color: rgba(90, 158, 111, 0.08);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 600px) {
   .account-info-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pref-radio-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pref-radio-btn {
+    text-align: center;
+  }
+
+  .account-theme-row {
+    flex-wrap: wrap;
+    gap: 10px;
   }
 }

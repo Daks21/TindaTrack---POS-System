@@ -216,6 +216,85 @@ document.addEventListener('DOMContentLoaded', function() {
 
       avatarEl.textContent = initials;
     }
+
+    // ── Nav Preferences (Theme & Appearance section) ──
+    // getNavPrefs / saveNavPrefs / applyNavPrefs are provided by sidebar.js (loaded first)
+
+    var navPrefs = getNavPrefs();
+
+    // Helper: initialise a pref radio group
+    function initRadioGroup(groupId, currentValue, onChange) {
+      var group = document.getElementById(groupId);
+      if (!group) return;
+      var btns = group.querySelectorAll('.pref-radio-btn');
+      btns.forEach(function(btn) {
+        if (btn.dataset.value === currentValue) btn.classList.add('is-selected');
+        btn.addEventListener('click', function() {
+          btns.forEach(function(b) { b.classList.remove('is-selected'); });
+          btn.classList.add('is-selected');
+          onChange(btn.dataset.value);
+        });
+      });
+    }
+
+    // Helper: initialise a pref toggle switch
+    function initPrefToggle(id, currentValue, onChange) {
+      var toggle = document.getElementById(id);
+      if (!toggle) return;
+      if (currentValue) {
+        toggle.classList.add('is-on');
+        toggle.setAttribute('aria-pressed', 'true');
+      }
+      toggle.addEventListener('click', function() {
+        var isOn = toggle.classList.toggle('is-on');
+        toggle.setAttribute('aria-pressed', String(isOn));
+        onChange(isOn);
+      });
+    }
+
+    // Nav label — text beside the mobile logo
+    initRadioGroup('nav-label-group', navPrefs.navLabel, function(value) {
+      var updated = getNavPrefs();
+      updated.navLabel = value;
+      saveNavPrefs(updated);
+      // Live-update the injected mobile logo label
+      var logoLabel = document.querySelector('.mobile-topbar-logo .sidebar-app-name');
+      if (logoLabel) {
+        if (value === 'page') {
+          var h1 = document.querySelector('.topbar h1');
+          logoLabel.textContent = h1 ? h1.textContent : 'Celso POS';
+        } else {
+          logoLabel.textContent = 'Celso POS';
+        }
+      }
+    });
+
+    // Logo tap destination
+    initRadioGroup('logo-target-group', navPrefs.logoTarget, function(value) {
+      var updated = getNavPrefs();
+      updated.logoTarget = value;
+      saveNavPrefs(updated);
+      // Live-update the mobile logo icon link href
+      var logoLink = document.querySelector('.mobile-logo-link');
+      if (logoLink) logoLink.href = value;
+    });
+
+    // Show notifications bell
+    initPrefToggle('show-notif-toggle', navPrefs.showNotifications, function(isOn) {
+      var updated = getNavPrefs();
+      updated.showNotifications = isOn;
+      saveNavPrefs(updated);
+      applyNavPrefs();
+    });
+
+    // Show theme toggle button
+    initPrefToggle('show-theme-btn-toggle', navPrefs.showThemeToggle, function(isOn) {
+      var updated = getNavPrefs();
+      updated.showThemeToggle = isOn;
+      saveNavPrefs(updated);
+      applyNavPrefs();
+    });
+
   } catch (e) {
     console.error('Error parsing user data:', e);
     window.location.href = '../index.html';
