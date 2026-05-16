@@ -149,14 +149,19 @@ function renderProducts(productList) {
       <td>${product.category}</td>
       <td>₱${product.price.toLocaleString()}</td>
       <td>₱${product.cost.toLocaleString()}</td>
-      <td>
-        <div class="table-actions">
-          <button type="button" class="table-button edit-button" data-id="${product.id}">
-            Edit
+      <td class="actions-cell">
+        <div class="kebab-wrapper">
+          <button type="button" class="kebab-btn" data-id="${product.id}" title="Actions">
+            <i data-lucide="more-vertical"></i>
           </button>
-          <button type="button" class="table-button delete-button" data-id="${product.id}">
-            Delete
-          </button>
+          <div class="kebab-dropdown">
+            <button type="button" class="kebab-item edit-btn" data-id="${product.id}">
+              <i data-lucide="pencil"></i> Edit
+            </button>
+            <button type="button" class="kebab-item delete-btn" data-id="${product.id}">
+              <i data-lucide="trash-2"></i> Delete
+            </button>
+          </div>
         </div>
       </td>
     `;
@@ -164,18 +169,37 @@ function renderProducts(productList) {
     productsTableBody.appendChild(row);
   });
 
+  lucide.createIcons();
   attachProductActionEvents();
 }
 
+function closeAllDropdowns() {
+  document.querySelectorAll('.kebab-dropdown.open').forEach(function (d) {
+    d.classList.remove('open');
+  });
+}
+
 function attachProductActionEvents() {
-  document.querySelectorAll(".edit-button").forEach(function (button) {
+  document.querySelectorAll(".kebab-btn").forEach(function (button) {
+    button.addEventListener("click", function (e) {
+      e.stopPropagation();
+      const dropdown = button.nextElementSibling;
+      const isOpen = dropdown.classList.contains('open');
+      closeAllDropdowns();
+      if (!isOpen) dropdown.classList.add('open');
+    });
+  });
+
+  document.querySelectorAll(".edit-btn").forEach(function (button) {
     button.addEventListener("click", function () {
+      closeAllDropdowns();
       openEditProductModal(button.dataset.id);
     });
   });
 
-  document.querySelectorAll(".delete-button").forEach(function (button) {
+  document.querySelectorAll(".delete-btn").forEach(function (button) {
     button.addEventListener("click", function () {
+      closeAllDropdowns();
       handleDeleteProduct(button.dataset.id);
     });
   });
@@ -224,5 +248,9 @@ function closeProductModal() {
   productForm.reset();
   editingProductId = null;
 }
+
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('.kebab-wrapper')) closeAllDropdowns();
+});
 
 refreshProducts();
