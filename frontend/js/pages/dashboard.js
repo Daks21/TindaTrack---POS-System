@@ -442,6 +442,79 @@ function _renderStockAlerts(products, page) {
   }
 }
 
+// ── Recent Transactions pagination ──
+
+var _txSales = [];
+var _txPage  = 1;
+
+function _renderTransactions(sales, page) {
+  var _pop = document.getElementById('items-popover');
+  if (_pop) _pop.classList.remove('is-visible');
+  _txSales = sales;
+  var pageSize   = parseInt(localStorage.getItem('dashboardRecentCount') || '5', 10) || 5;
+  var total      = sales.length;
+  var totalPages = Math.max(1, Math.ceil(total / pageSize));
+  _txPage        = Math.min(Math.max(1, page), totalPages);
+
+  var tbody = document.getElementById('recent-transactions-body');
+  var pager = document.getElementById('tx-pagination');
+  if (!tbody) return;
+
+  if (total === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--color-text-muted);">No transactions recorded yet.</td></tr>';
+    if (pager) pager.style.display = 'none';
+    return;
+  }
+
+  var start = (_txPage - 1) * pageSize;
+  var slice = sales.slice(start, start + pageSize);
+  var html  = '';
+  slice.forEach(function (sale) {
+    var d              = new Date(sale.timestamp);
+    var dateStr        = d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+    var timeStr        = d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+    var itemCount      = sale.items.reduce(function (s, i) { return s + i.quantity; }, 0);
+    var totalFmt       = _formatPeso(sale.total);
+    var receiptDisplay = sale.receiptNo ? sale.receiptNo.replace(/^RCPT-/, '') : String(sale.id).padStart(6, '0');
+    var itemsJson      = encodeURIComponent(JSON.stringify(sale.items));
+    html +=
+      '<tr>' +
+        '<td>' + receiptDisplay + '</td>' +
+        '<td>' + dateStr + ' · ' + timeStr + '</td>' +
+        '<td class="tx-items-cell" data-items="' + itemsJson + '">' +
+          itemCount + ' item' + (itemCount !== 1 ? 's' : '') +
+        '</td>' +
+        '<td>' + totalFmt + '</td>' +
+      '</tr>';
+  });
+  tbody.innerHTML = html;
+
+  if (pager) {
+    if (totalPages <= 1) {
+      pager.style.display = 'none';
+    } else {
+      pager.style.display = 'flex';
+      var prevDisabled = _txPage <= 1          ? ' disabled' : '';
+      var nextDisabled = _txPage >= totalPages ? ' disabled' : '';
+      pager.innerHTML =
+        '<button class="pager-btn" id="tx-prev"' + prevDisabled + '>' +
+          '<i data-lucide="chevron-left"></i>' +
+        '</button>' +
+        '<span class="pager-info">' + _txPage + ' / ' + totalPages + '</span>' +
+        '<button class="pager-btn" id="tx-next"' + nextDisabled + '>' +
+          '<i data-lucide="chevron-right"></i>' +
+        '</button>';
+
+      var prevBtn = document.getElementById('tx-prev');
+      var nextBtn = document.getElementById('tx-next');
+      if (prevBtn) prevBtn.addEventListener('click', function () { _renderTransactions(_txSales, _txPage - 1); });
+      if (nextBtn) nextBtn.addEventListener('click', function () { _renderTransactions(_txSales, _txPage + 1); });
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+}
+
 // ── DOM references ──
 
 const currentUser         = JSON.parse(localStorage.getItem("currentUser"));
@@ -480,48 +553,17 @@ async function initDashboard() {
   var alertItems = (summary.lowStockItems || []).filter(function (p) { return getStockStatus(p.stock).key !== 'ok'; });
   _renderStockAlerts(alertItems, 1);
 
-  // Recent transactions — most recent N sales across all dates
-  var recentTxBody = document.getElementById('recent-transactions-body');
-  if (recentTxBody) {
-    let salesResult;
-    try {
-      salesResult = await getSales();
-    } catch (err) {
-      showApiError('Network error. Is the server running?');
-      salesResult = { data: [] };
-    }
-    var recentCount = parseInt(localStorage.getItem('dashboardRecentCount') || '5', 10) || 5;
-    const recentSales = (salesResult && salesResult.data ? salesResult.data : [])
-      .sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); })
-      .slice(0, recentCount);
-
-    if (recentSales.length === 0) {
-      recentTxBody.innerHTML =
-        '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--color-text-muted);">No transactions recorded yet.</td></tr>';
-    } else {
-      var txHtml = '';
-      recentSales.forEach(function (sale) {
-        var d             = new Date(sale.timestamp);
-        var dateStr       = d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-        var timeStr       = d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
-        var itemCount     = sale.items.reduce(function (s, i) { return s + i.quantity; }, 0);
-        var totalFmt      = _formatPeso(sale.total);
-        var receiptDisplay = sale.receiptNo ? sale.receiptNo.replace(/^RCPT-/, '') : String(sale.id).padStart(6, '0');
-
-        var itemsJson = encodeURIComponent(JSON.stringify(sale.items));
-        txHtml +=
-          '<tr>' +
-            '<td>' + receiptDisplay + '</td>' +
-            '<td>' + dateStr + ' · ' + timeStr + '</td>' +
-            '<td class="tx-items-cell" data-items="' + itemsJson + '">' +
-              itemCount + ' item' + (itemCount !== 1 ? 's' : '') +
-            '</td>' +
-            '<td>' + totalFmt + '</td>' +
-          '</tr>';
-      });
-      recentTxBody.innerHTML = txHtml;
-    }
+  // Recent transactions
+  var txSalesResult;
+  try {
+    txSalesResult = await getSales();
+  } catch (err) {
+    showApiError('Network error. Is the server running?');
+    txSalesResult = { data: [] };
   }
+  var allSales = (txSalesResult && txSalesResult.data ? txSalesResult.data : [])
+    .sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+  _renderTransactions(allSales, 1);
 
   // Fetch chart + heatmap data for pinned widgets
   try {

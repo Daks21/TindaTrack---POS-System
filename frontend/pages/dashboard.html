@@ -180,9 +180,15 @@
         </section>
 
         <section class="dashboard-section">
-          <div class="section-header">
-            <h2>Recent Transactions</h2>
-            <p>Most recent transactions</p>
+          <div class="dashboard-section-row">
+            <div class="section-header" style="margin-bottom:0">
+              <h2>Recent Transactions</h2>
+              <p>Most recent transactions</p>
+            </div>
+            <a href="history.html" class="customize-dashboard-link">
+              <i data-lucide="clock"></i>
+              View History
+            </a>
           </div>
 
           <div class="table-wrapper">
@@ -202,6 +208,8 @@
               </tbody>
             </table>
           </div>
+
+          <div class="dash-pager" id="tx-pagination" style="display:none"></div>
         </section>
 
         <section class="dashboard-section">
